@@ -1,0 +1,111 @@
+import { useEffect, useState } from 'react';
+import { PlusIcon, PencilIcon, Trash2Icon } from 'lucide-react';
+import { api, type CategoryDto } from '@pos/api-client';
+import { PageHeader } from '@/components/page-header';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
+
+export function CategoriesPage() {
+  const [categories, setCategories] = useState<CategoryDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<CategoryDto | null>(null);
+  const [form, setForm] = useState({ name: '', description: '', sortOrder: '0' });
+
+  const load = async () => {
+    setLoading(true);
+    setCategories(await api.getCategories());
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const handleSave = async () => {
+    try {
+      if (editing) {
+        await api.updateCategory(editing.id, { name: form.name, description: form.description || undefined, sortOrder: Number(form.sortOrder) });
+        toast.success('Category updated');
+      } else {
+        await api.createCategory({ name: form.name, description: form.description || undefined, sortOrder: Number(form.sortOrder) });
+        toast.success('Category created');
+      }
+      setModalOpen(false);
+      load();
+    } catch {
+      toast.error('Failed to save category');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this category?')) return;
+    try {
+      await api.deleteCategory(id);
+      toast.success('Category deleted');
+      load();
+    } catch {
+      toast.error('Failed to delete category');
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Categories"
+        description="Organize products into categories"
+        action={<Button onClick={() => { setEditing(null); setForm({ name: '', description: '', sortOrder: '0' }); setModalOpen(true); }}><PlusIcon data-icon="inline-start" />Add Category</Button>}
+      />
+      {loading ? <Skeleton className="h-64" /> : (
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Sort</TableHead>
+                <TableHead className="w-28" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {categories.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-medium">{c.name}</TableCell>
+                  <TableCell className="text-muted-foreground">{c.description ?? '—'}</TableCell>
+                  <TableCell>{c.sortOrder}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon-sm" onClick={() => { setEditing(c); setForm({ name: c.name, description: c.description ?? '', sortOrder: String(c.sortOrder) }); setModalOpen(true); }}>
+                        <PencilIcon />
+                      </Button>
+                      <Button variant="ghost" size="icon-sm" onClick={() => handleDelete(c.id)}>
+                        <Trash2Icon />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editing ? 'Edit Category' : 'New Category'}</DialogTitle></DialogHeader>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+            <div className="flex flex-col gap-2"><Label>Description</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+            <div className="flex flex-col gap-2"><Label>Sort Order</Label><Input type="number" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value })} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

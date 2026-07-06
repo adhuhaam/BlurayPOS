@@ -1,0 +1,25 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Node
+node_modules/
+dist/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.DS_Store
+*.log
+
+# Build
+coverage/
+uploads/
+_mio_ref/

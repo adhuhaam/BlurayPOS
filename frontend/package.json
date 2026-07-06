@@ -1,0 +1,17 @@
+{
+  "name": "pos-frontend",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n pos,admin -c cyan,magenta \"npm run dev -w @pos/pos-terminal\" \"npm run dev -w @pos/admin-portal\"",
+    "build": "npm run build -w @pos/pos-terminal && npm run build -w @pos/admin-portal",
+    "dev:pos": "npm run dev -w @pos/pos-terminal",
+    "dev:admin": "npm run dev -w @pos/admin-portal"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
