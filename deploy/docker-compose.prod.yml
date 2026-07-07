@@ -23,6 +23,7 @@ services:
       retries: 10
 
   api:
+    image: bluraypos-api:latest
     build:
       context: ..
       dockerfile: Dockerfile
@@ -47,6 +48,7 @@ services:
       - "8080"
 
   edge:
+    image: bluraypos-edge:latest
     build:
       context: ..
       dockerfile: deploy/Dockerfile.web

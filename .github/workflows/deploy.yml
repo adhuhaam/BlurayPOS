@@ -1,15 +1,18 @@
 name: Deploy to droplet
 
-# Pushes to main/master (i.e. after a PR merge) trigger a deploy.
+# MANUAL deploy only (run from the Actions tab). Auto-deploy on push is
+# intentionally disabled — deploys are triggered by hand.
 # The droplet must already be provisioned (see deploy/provision.sh) and these
 # repository secrets must be set:
 #   DEPLOY_SSH_HOST  – droplet public IP or hostname
 #   DEPLOY_SSH_USER  – SSH user (e.g. root or a deploy user)
 #   DEPLOY_SSH_KEY   – private SSH key authorized on the droplet
 #   DEPLOY_SSH_PORT  – (optional) SSH port, defaults to 22
+#
+# NOTE: on small droplets (<= 1 GB RAM) building the .NET image on the box can
+# OOM/thrash. Prefer building images off-box and shipping them (see
+# docs/hosting-plan.md → "Low-memory droplets").
 on:
-  push:
-    branches: [main, master]
   workflow_dispatch:
 
 concurrency:

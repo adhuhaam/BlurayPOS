@@ -18,8 +18,16 @@ if [ ! -f deploy/.env.prod ]; then
   exit 1
 fi
 
-echo "==> Building and starting containers"
-${COMPOSE} up -d --build
+# On low-memory droplets (<= 1 GB) building the .NET image on the box can OOM.
+# Set SKIP_BUILD=1 to use pre-loaded images instead (see docs/hosting-plan.md
+# → "Low-memory droplets" for the off-box build + `docker load` workflow).
+if [ "${SKIP_BUILD:-0}" = "1" ]; then
+  echo "==> Starting containers (SKIP_BUILD=1, using pre-loaded images)"
+  ${COMPOSE} up -d --no-build
+else
+  echo "==> Building and starting containers"
+  ${COMPOSE} up -d --build
+fi
 
 echo "==> Pruning dangling images"
 docker image prune -f
