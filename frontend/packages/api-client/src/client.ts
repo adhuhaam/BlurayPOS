@@ -5,6 +5,7 @@ const REFRESH_TOKEN_KEY = 'pos_refresh_token';
 const USER_KEY = 'pos_user';
 const STORES_KEY = 'pos_stores';
 const ROLES_KEY = 'pos_roles';
+const PERMISSIONS_KEY = 'pos_permissions';
 const STORE_ID_KEY = 'pos_store_id';
 
 export function getApiBaseUrl(): string {
@@ -36,6 +37,7 @@ export function clearAuth(): void {
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem(STORES_KEY);
   localStorage.removeItem(ROLES_KEY);
+  localStorage.removeItem(PERMISSIONS_KEY);
   localStorage.removeItem(STORE_ID_KEY);
 }
 
@@ -64,6 +66,15 @@ export function getStoredRoles(): string[] {
 
 export function setStoredRoles(roles: string[]): void {
   localStorage.setItem(ROLES_KEY, JSON.stringify(roles));
+}
+
+export function getStoredPermissions(): string[] {
+  const raw = localStorage.getItem(PERMISSIONS_KEY);
+  return raw ? (JSON.parse(raw) as string[]) : [];
+}
+
+export function setStoredPermissions(permissions: string[]): void {
+  localStorage.setItem(PERMISSIONS_KEY, JSON.stringify(permissions));
 }
 
 export function getSelectedStoreId(): string | null {
@@ -123,6 +134,7 @@ async function refreshAccessToken(): Promise<boolean> {
     refreshToken: string;
     user: unknown;
     roles: string[];
+    permissions: string[];
     stores: unknown[];
   }>;
 
@@ -131,6 +143,7 @@ async function refreshAccessToken(): Promise<boolean> {
   setAuthTokens(json.data.accessToken, json.data.refreshToken);
   setStoredUser(json.data.user);
   setStoredRoles(json.data.roles);
+  setStoredPermissions(json.data.permissions ?? []);
   setStoredStores(json.data.stores);
   return true;
 }

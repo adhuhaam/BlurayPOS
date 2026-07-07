@@ -63,6 +63,9 @@ export function LoginPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
+            <p className="text-center text-sm text-muted-foreground">
+              New business? <a href="/register" className="text-primary underline-offset-4 hover:underline">Create a store</a>
+            </p>
           </form>
         </CardContent>
       </Card>

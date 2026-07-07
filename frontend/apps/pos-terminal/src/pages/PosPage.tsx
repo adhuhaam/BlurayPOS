@@ -10,7 +10,7 @@ import {
   useOnlineStatus,
 } from '@pos/offline-sync';
 import { Button, Input, Modal, ThemeToggle } from '@pos/ui';
-import { usePos } from '../auth';
+import { usePos, usePosPermission } from '../auth';
 import { StatusBar } from '../components/StatusBar';
 import { ReceiptView } from '../components/ReceiptView';
 import { usePosHub } from '../hooks/usePosHub';
@@ -23,6 +23,7 @@ interface CartItem {
 
 export function PosPage() {
   const { store, storeId, logout } = usePos();
+  const canViewOrders = usePosPermission('Order.View');
   const navigate = useNavigate();
   const online = useOnlineStatus();
   const barcodeRef = useRef<HTMLInputElement>(null);
@@ -208,6 +209,9 @@ export function PosPage() {
         <div className="flex items-center gap-3">
           <StatusBar />
           <ThemeToggle />
+          {canViewOrders && (
+            <Button variant="secondary" size="sm" onClick={() => navigate('/orders')}>Orders</Button>
+          )}
           <Button variant="secondary" size="sm" onClick={() => navigate('/shift')}>Shift</Button>
           <Button variant="ghost" size="sm" onClick={logout}>Logout</Button>
         </div>

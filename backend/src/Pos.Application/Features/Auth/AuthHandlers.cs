@@ -22,6 +22,26 @@ public class LoginCommandHandler(IAuthService authService) : IRequestHandler<Log
         authService.LoginAsync(command.Request, cancellationToken);
 }
 
+public record RegisterCommand(RegisterRequest Request) : IRequest<LoginResponse>;
+
+public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
+{
+    public RegisterCommandValidator()
+    {
+        RuleFor(x => x.Request.BusinessName).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.Request.OwnerFirstName).NotEmpty();
+        RuleFor(x => x.Request.OwnerLastName).NotEmpty();
+        RuleFor(x => x.Request.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.Request.Password).MinimumLength(8);
+    }
+}
+
+public class RegisterCommandHandler(IAuthService authService) : IRequestHandler<RegisterCommand, LoginResponse>
+{
+    public Task<LoginResponse> Handle(RegisterCommand command, CancellationToken cancellationToken) =>
+        authService.RegisterAsync(command.Request, cancellationToken);
+}
+
 public record GetCurrentUserQuery : IRequest<MeResponse>;
 
 public class GetCurrentUserQueryHandler(IAuthService authService) : IRequestHandler<GetCurrentUserQuery, MeResponse>

@@ -30,4 +30,8 @@ public class SubscriptionController(IMediator mediator) : ApiControllerBase(medi
     [HttpPost("checkout")]
     public async Task<ActionResult<ApiResponse<CheckoutResponse>>> Checkout([FromBody] ChangePlanRequest request) =>
         OkResponse(await Mediator.Send(new CreateCheckoutCommand(request)));
+
+    [HttpPost("payments")]
+    public async Task<ActionResult<ApiResponse<SubscriptionPaymentDto>>> SubmitPayment([FromBody] SubmitSubscriptionPaymentRequest request) =>
+        OkResponse(await Mediator.Send(new SubmitSubscriptionPaymentCommand(request)));
 }

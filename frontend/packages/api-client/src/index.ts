@@ -1,7 +1,8 @@
-import { request, setAuthTokens, setStoredUser, setStoredStores, setStoredRoles, getRefreshToken, getSelectedStoreId, getAccessToken, getApiBaseUrl } from './client.js';
+import { request, setAuthTokens, setStoredUser, setStoredStores, setStoredRoles, setStoredPermissions, getRefreshToken, getSelectedStoreId, getAccessToken, getApiBaseUrl } from './client.js';
 import type {
   LoginRequest,
   LoginResponse,
+  RegisterRequest,
   UserDto,
   StoreDto,
   OrganizationDto,
@@ -34,7 +35,11 @@ import type {
   UpdateStoreRequest,
   UpdateOrganizationRequest,
   CreateUserRequest,
+  UpdateUserRequest,
   UserListItemDto,
+  RolePermissionsDto,
+  PlatformUserListItemDto,
+  UpdatePlatformUserRequest,
   SupplyItemDto,
   CreateSupplyItemRequest,
   UpdateSupplyItemRequest,
@@ -45,12 +50,20 @@ import type {
   UploadResponse,
   MeResponse,
   PlanDto,
+  PlanAdminDto,
+  UpsertPlanRequest,
   SubscriptionDto,
   OrganizationListItemDto,
+  OrganizationDetailDto,
+  UpdatePlatformOrganizationRequest,
   CreateOrganizationRequest,
   CreateOrganizationResponse,
   ChangePlanRequest,
   CheckoutResponse,
+  SubmitSubscriptionPaymentRequest,
+  SubscriptionPaymentDto,
+  PlatformSettingsDto,
+  UpdatePlatformSettingsRequest,
   CustomerDto,
   CreateCustomerRequest,
 } from './types.js';
@@ -66,10 +79,26 @@ export const api = {
     setStoredUser(result.user);
     setStoredStores(result.stores);
     setStoredRoles(result.roles);
+    setStoredPermissions(result.permissions);
     return result;
   },
 
-  getMe: () => request<MeResponse>('/api/auth/me'),
+  register: async (data: RegisterRequest): Promise<LoginResponse> => {
+    const result = await request<LoginResponse>('/api/auth/register', { method: 'POST', body: data, auth: false });
+    setAuthTokens(result.accessToken, result.refreshToken);
+    setStoredUser(result.user);
+    setStoredStores(result.stores);
+    setStoredRoles(result.roles);
+    setStoredPermissions(result.permissions);
+    return result;
+  },
+
+  getMe: async (): Promise<MeResponse> => {
+    const me = await request<MeResponse>('/api/auth/me');
+    setStoredRoles(me.roles);
+    setStoredPermissions(me.permissions);
+    return me;
+  },
 
   refresh: () => {
     const refreshToken = getRefreshToken();
@@ -83,6 +112,7 @@ export const api = {
       setStoredUser(result.user);
       setStoredStores(result.stores);
       setStoredRoles(result.roles);
+      setStoredPermissions(result.permissions);
       return result;
     });
   },
@@ -190,6 +220,33 @@ export const api = {
   getOrganizations: () => request<OrganizationListItemDto[]>('/api/platform/organizations'),
   createOrganization: (data: CreateOrganizationRequest) =>
     request<CreateOrganizationResponse>('/api/platform/organizations', { method: 'POST', body: data }),
+  getPlatformOrganization: (id: string) =>
+    request<OrganizationDetailDto>(`/api/platform/organizations/${id}`),
+  updatePlatformOrganization: (id: string, data: UpdatePlatformOrganizationRequest) =>
+    request<OrganizationDetailDto>(`/api/platform/organizations/${id}`, { method: 'PUT', body: data }),
+  suspendOrganization: (id: string, suspend: boolean) =>
+    request<object>(`/api/platform/organizations/${id}/suspend`, { method: 'POST', body: { suspend } }),
+  changeOrganizationPlan: (id: string, planId: string) =>
+    request<SubscriptionDto>(`/api/platform/organizations/${id}/plan`, { method: 'PUT', body: { planId } }),
+  resetManagerPassword: (id: string, newPassword: string) =>
+    request<object>(`/api/platform/organizations/${id}/reset-password`, { method: 'POST', body: { newPassword } }),
+  getSubscriptionPayments: () => request<SubscriptionPaymentDto[]>('/api/platform/subscription-payments'),
+  verifySubscriptionPayment: (id: string, approve: boolean, notes?: string) =>
+    request<SubscriptionPaymentDto>(`/api/platform/subscription-payments/${id}/verify`, { method: 'POST', body: { approve, notes } }),
+  getPlatformSettings: () => request<PlatformSettingsDto>('/api/platform/settings'),
+  updatePlatformSettings: (data: UpdatePlatformSettingsRequest) =>
+    request<PlatformSettingsDto>('/api/platform/settings', { method: 'PUT', body: data }),
+  getPlatformPlans: () => request<PlanAdminDto[]>('/api/platform/plans'),
+  createPlatformPlan: (data: UpsertPlanRequest) =>
+    request<PlanAdminDto>('/api/platform/plans', { method: 'POST', body: data }),
+  updatePlatformPlan: (id: string, data: UpsertPlanRequest) =>
+    request<PlanAdminDto>(`/api/platform/plans/${id}`, { method: 'PUT', body: data }),
+  deactivatePlatformPlan: (id: string) =>
+    request<object>(`/api/platform/plans/${id}`, { method: 'DELETE' }),
+  getPlatformUsers: (params?: { organizationId?: string; search?: string }) =>
+    request<PlatformUserListItemDto[]>('/api/platform/users', { params }),
+  updatePlatformUser: (id: string, data: UpdatePlatformUserRequest) =>
+    request<PlatformUserListItemDto>(`/api/platform/users/${id}`, { method: 'PUT', body: data }),
 
   // Plans & Billing
   getPlans: () => request<PlanDto[]>('/api/plans'),
@@ -198,11 +255,24 @@ export const api = {
     request<SubscriptionDto>('/api/subscription/plan', { method: 'PUT', body: data }),
   createCheckout: (data: ChangePlanRequest) =>
     request<CheckoutResponse>('/api/subscription/checkout', { method: 'POST', body: data }),
+  submitSubscriptionPayment: (data: SubmitSubscriptionPaymentRequest) =>
+    request<SubscriptionPaymentDto>('/api/subscription/payments', { method: 'POST', body: data }),
 
   // Users
   getUsers: () => request<UserListItemDto[]>('/api/users'),
   createUser: (data: CreateUserRequest) =>
     request<UserDto>('/api/users', { method: 'POST', body: data }),
+  updateUser: (id: string, data: UpdateUserRequest) =>
+    request<UserListItemDto>(`/api/users/${id}`, { method: 'PUT', body: data }),
+
+  // Role permissions (manager)
+  getManageableRoles: () => request<string[]>('/api/roles/manageable'),
+  getRolePermissions: (role: string) => request<RolePermissionsDto>(`/api/roles/${role}/permissions`),
+  setRolePermissions: (role: string, permissionCodes: string[]) =>
+    request<RolePermissionsDto>(`/api/roles/${role}/permissions`, {
+      method: 'PUT',
+      body: { permissionCodes },
+    }),
 
   // Supplies & recipes
   getSupplyItems: (storeId: string) => request<SupplyItemDto[]>('/api/supplies', { params: { storeId } }),

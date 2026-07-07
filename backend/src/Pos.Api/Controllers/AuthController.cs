@@ -13,6 +13,11 @@ public class AuthController(IMediator mediator) : ApiControllerBase(mediator)
     public async Task<ActionResult<ApiResponse<LoginResponse>>> Login([FromBody] LoginRequest request) =>
         OkResponse(await Mediator.Send(new LoginCommand(request)));
 
+    [HttpPost("register")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ApiResponse<LoginResponse>>> Register([FromBody] RegisterRequest request) =>
+        OkResponse(await Mediator.Send(new RegisterCommand(request)));
+
     [HttpPost("refresh")]
     [AllowAnonymous]
     public async Task<ActionResult<ApiResponse<LoginResponse>>> Refresh([FromBody] RefreshTokenRequest request) =>

@@ -1,4 +1,5 @@
 using Pos.Domain.Common;
+using Pos.Domain.Enums;
 
 namespace Pos.Domain.Entities;
 
@@ -10,8 +11,21 @@ public class Organization : BaseEntity
     public string? ReceiptHeader { get; set; }
     public string? ReceiptFooter { get; set; }
     public string Currency { get; set; } = "USD";
+    public string? BusinessEmail { get; set; }
+    public string? Phone { get; set; }
+    public string? Address { get; set; }
+    public string Timezone { get; set; } = "UTC";
+    public bool IsSuspended { get; set; }
+    public DateTime? SuspendedAt { get; set; }
+    public bool IsReadOnly { get; set; }
     public string? PaymentQrPayload { get; set; }
     public string? PaymentInstructions { get; set; }
+    // Maldives GST (MIRA) — see docs/GST_MALDIVES.md
+    public string? GstRegistrationNumber { get; set; }
+    public GstType GstType { get; set; } = GstType.None;
+    public decimal GstRate { get; set; }
+    public string? GstBusinessName { get; set; }
+    public string? GstBusinessAddress { get; set; }
 
     public Subscription? Subscription { get; set; }
     public ICollection<Store> Stores { get; set; } = [];

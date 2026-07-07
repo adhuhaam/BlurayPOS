@@ -42,10 +42,11 @@ public class CompleteOrderCommandValidator : AbstractValidator<CompleteOrderComm
     }
 }
 
-public class GetOrdersQueryHandler(IPosDbContext db) : IRequestHandler<GetOrdersQuery, PagedResult<OrderDto>>
+public class GetOrdersQueryHandler(IPosDbContext db, IPermissionChecker permissions) : IRequestHandler<GetOrdersQuery, PagedResult<OrderDto>>
 {
     public async Task<PagedResult<OrderDto>> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
     {
+        permissions.RequirePermission("Order.View");
         var query = db.Orders
             .Include(o => o.Lines)
             .Include(o => o.Payments)
@@ -71,10 +72,11 @@ public class GetOrdersQueryHandler(IPosDbContext db) : IRequestHandler<GetOrders
     }
 }
 
-public class GetOrderByIdQueryHandler(IPosDbContext db) : IRequestHandler<GetOrderByIdQuery, OrderDto>
+public class GetOrderByIdQueryHandler(IPosDbContext db, IPermissionChecker permissions) : IRequestHandler<GetOrderByIdQuery, OrderDto>
 {
     public async Task<OrderDto> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)
     {
+        permissions.RequirePermission("Order.View");
         var order = await db.Orders
             .Include(o => o.Lines)
             .Include(o => o.Payments)
@@ -85,10 +87,14 @@ public class GetOrderByIdQueryHandler(IPosDbContext db) : IRequestHandler<GetOrd
     }
 }
 
-public class CreateOrderCommandHandler(IPosDbContext db, ITenantContext tenant, IAuditService audit) : IRequestHandler<CreateOrderCommand, OrderDto>
+public class CreateOrderCommandHandler(IPosDbContext db, ITenantContext tenant, IAuditService audit, IPermissionChecker permissions) : IRequestHandler<CreateOrderCommand, OrderDto>
 {
     public async Task<OrderDto> Handle(CreateOrderCommand command, CancellationToken cancellationToken)
     {
+        permissions.RequirePermission("Sale.Create");
+
+        if (command.Request.DiscountAmount > 0)
+            permissions.RequirePermission("Sale.Discount");
         if (!tenant.OrganizationId.HasValue || !tenant.StoreId.HasValue)
             throw new InvalidOperationException("Store context required.");
 
@@ -169,10 +175,14 @@ public class CreateOrderCommandHandler(IPosDbContext db, ITenantContext tenant, 
     }
 }
 
-public class UpdateOrderCommandHandler(IPosDbContext db, ITenantContext tenant, IAuditService audit) : IRequestHandler<UpdateOrderCommand, OrderDto>
+public class UpdateOrderCommandHandler(IPosDbContext db, ITenantContext tenant, IAuditService audit, IPermissionChecker permissions) : IRequestHandler<UpdateOrderCommand, OrderDto>
 {
     public async Task<OrderDto> Handle(UpdateOrderCommand command, CancellationToken cancellationToken)
     {
+        permissions.RequirePermission("Sale.Edit");
+
+        if (command.Request.DiscountAmount > 0)
+            permissions.RequirePermission("Sale.Discount");
         var order = await db.Orders
             .Include(o => o.Lines)
             .Include(o => o.Payments)
@@ -203,15 +213,21 @@ public class CompleteOrderCommandHandler(
     IPaymentProviderResolver paymentResolver,
     IAuditService audit,
     ISyncService sync,
-    IPosRealtimeNotifier notifier) : IRequestHandler<CompleteOrderCommand, OrderDto>
+    IPosRealtimeNotifier notifier,
+    IPermissionChecker permissions) : IRequestHandler<CompleteOrderCommand, OrderDto>
 {
     public async Task<OrderDto> Handle(CompleteOrderCommand command, CancellationToken cancellationToken)
     {
+        permissions.RequirePermission("Sale.Create");
+
         var order = await db.Orders
             .Include(o => o.Lines)
             .Include(o => o.Payments)
             .FirstOrDefaultAsync(o => o.Id == command.Id, cancellationToken)
             ?? throw new KeyNotFoundException("Order not found.");
+
+        if (order.DiscountAmount > 0 || order.Lines.Any(l => l.DiscountAmount > 0))
+            permissions.RequirePermission("Sale.Discount");
 
         if (order.Status != OrderStatus.Draft && order.Status != OrderStatus.Held)
             throw new InvalidOperationException("Order cannot be completed.");
@@ -333,10 +349,11 @@ public class CompleteOrderCommandHandler(
     }
 }
 
-public class VoidOrderCommandHandler(IPosDbContext db, IAuditService audit) : IRequestHandler<VoidOrderCommand, OrderDto>
+public class VoidOrderCommandHandler(IPosDbContext db, IAuditService audit, IPermissionChecker permissions) : IRequestHandler<VoidOrderCommand, OrderDto>
 {
     public async Task<OrderDto> Handle(VoidOrderCommand command, CancellationToken cancellationToken)
     {
+        permissions.RequirePermission("Sale.Void");
         var order = await db.Orders
             .Include(o => o.Lines)
             .Include(o => o.Payments)

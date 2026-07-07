@@ -4,7 +4,7 @@ namespace Pos.Infrastructure.Identity;
 
 public class ApplicationUser : IdentityUser<Guid>
 {
-    public Guid OrganizationId { get; set; }
+    public Guid? OrganizationId { get; set; }
     public Guid? DefaultStoreId { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;

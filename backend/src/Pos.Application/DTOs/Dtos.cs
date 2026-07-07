@@ -1,21 +1,139 @@
 namespace Pos.Application.DTOs;
 
 public record LoginRequest(string Email, string Password, Guid? StoreId = null);
-public record LoginResponse(string AccessToken, string RefreshToken, DateTime ExpiresAt, UserDto User, IList<string> Roles, IList<StoreDto> Stores);
+public record LoginResponse(string AccessToken, string RefreshToken, DateTime ExpiresAt, UserDto User, IList<string> Roles, IReadOnlyList<string> Permissions, IList<StoreDto> Stores);
 
-public record UserDto(Guid Id, string Email, string FirstName, string LastName, Guid OrganizationId, Guid? DefaultStoreId);
-public record MeResponse(UserDto User, IList<string> Roles, SubscriptionDto? Subscription);
+public record RegisterRequest(
+    string BusinessName,
+    string OwnerFirstName,
+    string OwnerLastName,
+    string Email,
+    string Password,
+    string? Phone = null,
+    string Currency = "MVR",
+    string Timezone = "Indian/Maldives");
+
+public record UserDto(Guid Id, string Email, string FirstName, string LastName, Guid? OrganizationId, Guid? DefaultStoreId);
+public record MeResponse(UserDto User, IList<string> Roles, IReadOnlyList<string> Permissions, SubscriptionDto? Subscription);
 public record StoreDto(Guid Id, string Name, string Code, string? Address, string? Phone, bool IsActive);
 public record OrganizationDto(Guid Id, string Name, string Slug, decimal DefaultTaxRate, string Currency, string? ReceiptHeader, string? ReceiptFooter, string? PaymentQrPayload, string? PaymentInstructions);
 public record UpdateOrganizationRequest(string Name, decimal DefaultTaxRate, string Currency, string? ReceiptHeader, string? ReceiptFooter, string? PaymentQrPayload, string? PaymentInstructions);
 
-public record PlanDto(Guid Id, string Name, string Slug, string? Description, decimal PriceMonthly, int MaxStores, int MaxUsers, int MaxTerminals, int SortOrder);
-public record SubscriptionDto(Guid Id, Guid PlanId, string PlanName, string PlanSlug, decimal PriceMonthly, string Status, DateTime CurrentPeriodStart, DateTime CurrentPeriodEnd, DateTime? TrialEndsAt, int MaxStores, int MaxUsers, int StoreCount, int UserCount);
+public record PlanDto(
+    Guid Id, string Name, string Slug, string? Description,
+    decimal PriceMonthly, decimal PriceYearly,
+    int MaxStores, int MaxUsers, int MaxTerminals, int MaxProducts, int MaxMonthlyOrders,
+    bool HasInventory, bool HasKitchen, bool HasDelivery, bool HasAccounting,
+    bool HasAdvancedReports, bool HasApi, bool HasPurchases, int SortOrder, bool IsActive = true);
+
+public record PlanAdminDto(
+    Guid Id, string Name, string Slug, string? Description,
+    decimal PriceMonthly, decimal PriceYearly,
+    int MaxStores, int MaxUsers, int MaxTerminals, int MaxProducts, int MaxMonthlyOrders,
+    bool HasInventory, bool HasKitchen, bool HasDelivery, bool HasAccounting,
+    bool HasAdvancedReports, bool HasApi, bool HasPurchases,
+    int SortOrder, bool IsActive, int SubscriberCount);
+
+public record UpsertPlanRequest(
+    string Name, string Slug, string? Description,
+    decimal PriceMonthly, decimal PriceYearly,
+    int MaxStores, int MaxUsers, int MaxTerminals, int MaxProducts, int MaxMonthlyOrders,
+    bool HasInventory, bool HasKitchen, bool HasDelivery, bool HasAccounting,
+    bool HasAdvancedReports, bool HasApi, bool HasPurchases,
+    int SortOrder, bool IsActive = true);
+
+public record SubscriptionDto(
+    Guid Id, Guid PlanId, string PlanName, string PlanSlug,
+    decimal PriceMonthly, decimal PriceYearly, string Status,
+    DateTime CurrentPeriodStart, DateTime CurrentPeriodEnd, DateTime? TrialEndsAt,
+    int MaxStores, int MaxUsers, int MaxProducts, int MaxMonthlyOrders,
+    bool HasKitchen, bool HasDelivery, bool HasAccounting, bool HasAdvancedReports, bool HasApi,
+    int StoreCount, int UserCount, bool IsReadOnly);
 public record ChangePlanRequest(Guid PlanId);
 public record CheckoutResponse(string CheckoutUrl, string Message);
 
-public record OrganizationListItemDto(Guid Id, string Name, string Slug, string PlanName, string SubscriptionStatus, int StoreCount, int UserCount, DateTime CreatedAt);
-public record CreateOrganizationRequest(string Name, string Slug, Guid PlanId, string AdminEmail, string AdminPassword, string AdminFirstName, string AdminLastName);
+public record OrganizationListItemDto(
+    Guid Id, string Name, string Slug, Guid? PlanId, string PlanName, string SubscriptionStatus,
+    bool IsSuspended, bool IsReadOnly,
+    int StoreCount, int UserCount, DateTime CreatedAt);
+
+public record OrganizationDetailDto(
+    Guid Id, string Name, string Slug,
+    string? BusinessEmail, string? Phone, string? Address,
+    string Timezone, string Currency, decimal DefaultTaxRate,
+    string? ReceiptHeader, string? ReceiptFooter,
+    string? PaymentQrPayload, string? PaymentInstructions,
+    bool IsSuspended, bool IsReadOnly,
+    Guid? PlanId, string PlanName, string SubscriptionStatus,
+    DateTime? CurrentPeriodEnd,
+    int StoreCount, int UserCount, DateTime CreatedAt);
+
+public record UpdatePlatformOrganizationRequest(
+    string Name,
+    string? BusinessEmail,
+    string? Phone,
+    string? Address,
+    string Timezone,
+    string Currency,
+    decimal DefaultTaxRate,
+    string? ReceiptHeader,
+    string? ReceiptFooter,
+    string? PaymentQrPayload,
+    string? PaymentInstructions,
+    bool IsReadOnly);
+
+public record CreateOrganizationRequest(
+    string Name, string Slug, Guid PlanId,
+    string AdminEmail, string AdminPassword, string AdminFirstName, string AdminLastName,
+    string? BusinessEmail = null, string? Phone = null, string? Address = null,
+    string Timezone = "UTC", string Currency = "USD", decimal DefaultTaxRate = 0.08m);
+
+public record SuspendOrganizationRequest(bool Suspend, string? Reason = null);
+public record ChangeOrganizationPlanRequest(Guid PlanId);
+public record ResetManagerPasswordRequest(string NewPassword);
+public record VerifySubscriptionPaymentRequest(bool Approve, string? Notes = null);
+public record SubmitSubscriptionPaymentRequest(Guid PlanId, decimal Amount, string Method, string? ProofImagePath, string? Notes);
+public record SubscriptionPaymentDto(
+    Guid Id, Guid OrganizationId, string OrganizationName, Guid PlanId, string PlanName,
+    decimal Amount, string Method, string Status, string? ProofImagePath, string? Notes,
+    DateTime PeriodStart, DateTime PeriodEnd, DateTime CreatedAt, DateTime? VerifiedAt);
+
+public record PlatformSettingsDto(
+    string PlatformName,
+    string PlatformTagline,
+    string SupportEmail,
+    string DefaultCurrency,
+    string DefaultTimezone,
+    bool AllowSelfRegistration,
+    bool MaintenanceMode,
+    string? MaintenanceMessage,
+    string BillingBankName,
+    string BillingBankAccount,
+    string BillingBankInstructions,
+    string BillingContactEmail,
+    string? AnnouncementTitle,
+    string? AnnouncementBody,
+    bool AnnouncementActive,
+    int OrganizationCount,
+    int UserCount,
+    int PendingPaymentCount);
+
+public record UpdatePlatformSettingsRequest(
+    string PlatformName,
+    string PlatformTagline,
+    string SupportEmail,
+    string DefaultCurrency,
+    string DefaultTimezone,
+    bool AllowSelfRegistration,
+    bool MaintenanceMode,
+    string? MaintenanceMessage,
+    string BillingBankName,
+    string BillingBankAccount,
+    string BillingBankInstructions,
+    string BillingContactEmail,
+    string? AnnouncementTitle,
+    string? AnnouncementBody,
+    bool AnnouncementActive);
 public record CreateOrganizationResponse(OrganizationDto Organization, UserDto Admin, SubscriptionDto Subscription);
 
 public record CategoryDto(Guid Id, string Name, string? Description, int SortOrder);
@@ -89,7 +207,15 @@ public record StoreAdminInput(string Email, string Password, string FirstName, s
 public record CreateStoreResponse(StoreDto Store, UserDto? StoreAdmin);
 public record UpdateStoreRequest(string Name, string? Address, string? Phone, bool IsActive);
 public record CreateUserRequest(string Email, string Password, string FirstName, string LastName, string Role, Guid? DefaultStoreId, IList<Guid>? StoreIds);
+public record UpdateUserRequest(string FirstName, string LastName, string Role, Guid? DefaultStoreId, bool IsActive, string? NewPassword);
 public record UserListItemDto(Guid Id, string Email, string FirstName, string LastName, string Role, Guid? DefaultStoreId, bool IsActive);
+
+public record PlatformUserListItemDto(
+    Guid Id, string Email, string FirstName, string LastName, string Role,
+    Guid? OrganizationId, string? OrganizationName, bool IsActive, DateTime CreatedAt);
+
+public record UpdatePlatformUserRequest(
+    string FirstName, string LastName, string Role, bool IsActive, string? NewPassword);
 
 public record OfflineSalePayload(CreateOrderRequest Order, CompleteOrderRequest Completion);
 public record RefreshTokenRequest(string RefreshToken, Guid? StoreId = null);

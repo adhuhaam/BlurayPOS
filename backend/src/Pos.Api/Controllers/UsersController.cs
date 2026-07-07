@@ -17,4 +17,8 @@ public class UsersController(IMediator mediator) : ApiControllerBase(mediator)
     [HttpPost]
     public async Task<ActionResult<ApiResponse<UserDto>>> CreateUser([FromBody] CreateUserRequest request) =>
         OkResponse(await Mediator.Send(new CreateUserCommand(request)));
+
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<ApiResponse<UserListItemDto>>> UpdateUser(Guid id, [FromBody] UpdateUserRequest request) =>
+        OkResponse(await Mediator.Send(new UpdateUserCommand(id, request)));
 }

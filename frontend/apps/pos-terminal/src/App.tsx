@@ -4,6 +4,7 @@ import { ProtectedRoute, ShiftRequiredRoute } from './components/ProtectedRoute'
 import { LoginPage } from './pages/LoginPage';
 import { ShiftPage } from './pages/ShiftPage';
 import { PosPage } from './pages/PosPage';
+import { OrdersPage } from './pages/OrdersPage';
 import { initTheme } from '@pos/ui';
 
 initTheme();
@@ -23,6 +24,7 @@ export function App() {
             <Route path="/shift" element={<ShiftPage />} />
             <Route element={<ShiftRequiredRoute />}>
               <Route index element={<PosPage />} />
+              <Route path="orders" element={<OrdersPage />} />
             </Route>
           </Route>
         </Routes>

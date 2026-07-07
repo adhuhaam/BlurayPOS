@@ -9,9 +9,19 @@ public class Plan : BaseEntity
     public string Slug { get; set; } = string.Empty;
     public string? Description { get; set; }
     public decimal PriceMonthly { get; set; }
+    public decimal PriceYearly { get; set; }
     public int MaxStores { get; set; }
     public int MaxUsers { get; set; }
     public int MaxTerminals { get; set; }
+    public int MaxProducts { get; set; }
+    public int MaxMonthlyOrders { get; set; }
+    public bool HasInventory { get; set; } = true;
+    public bool HasKitchen { get; set; }
+    public bool HasDelivery { get; set; }
+    public bool HasAccounting { get; set; }
+    public bool HasAdvancedReports { get; set; }
+    public bool HasApi { get; set; }
+    public bool HasPurchases { get; set; }
     public bool IsActive { get; set; } = true;
     public int SortOrder { get; set; }
 

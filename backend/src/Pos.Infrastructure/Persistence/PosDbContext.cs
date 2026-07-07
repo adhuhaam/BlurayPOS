@@ -40,6 +40,12 @@ public class PosDbContext(
     public DbSet<SyncEvent> SyncEvents => Set<SyncEvent>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<UserStoreAssignment> UserStoreAssignments => Set<UserStoreAssignment>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<OrganizationRolePermission> OrganizationRolePermissions => Set<OrganizationRolePermission>();
+    public DbSet<PlatformSettings> PlatformSettings => Set<PlatformSettings>();
+    public DbSet<SubscriptionPayment> SubscriptionPayments => Set<SubscriptionPayment>();
+    public DbSet<PlatformAnnouncement> PlatformAnnouncements => Set<PlatformAnnouncement>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -56,6 +62,35 @@ public class PosDbContext(
         builder.Entity<Plan>(e =>
         {
             e.HasIndex(x => x.Slug).IsUnique();
+        });
+
+        builder.Entity<Permission>(e =>
+        {
+            e.HasIndex(x => x.Code).IsUnique();
+        });
+
+        builder.Entity<RolePermission>(e =>
+        {
+            e.HasIndex(x => new { x.RoleName, x.PermissionId }).IsUnique();
+            e.HasOne(x => x.Permission).WithMany(x => x.RolePermissions).HasForeignKey(x => x.PermissionId);
+        });
+
+        builder.Entity<OrganizationRolePermission>(e =>
+        {
+            e.HasKey(x => new { x.OrganizationId, x.RoleName, x.PermissionId });
+            e.HasOne(x => x.Organization).WithMany().HasForeignKey(x => x.OrganizationId);
+            e.HasOne(x => x.Permission).WithMany().HasForeignKey(x => x.PermissionId);
+        });
+
+        builder.Entity<PlatformSettings>(e =>
+        {
+            e.HasIndex(x => x.Key).IsUnique();
+        });
+
+        builder.Entity<SubscriptionPayment>(e =>
+        {
+            e.HasOne(x => x.Organization).WithMany().HasForeignKey(x => x.OrganizationId);
+            e.HasOne(x => x.Plan).WithMany().HasForeignKey(x => x.PlanId);
         });
 
         builder.Entity<Subscription>(e =>

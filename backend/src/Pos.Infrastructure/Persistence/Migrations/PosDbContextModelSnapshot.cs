@@ -544,6 +544,12 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BusinessEmail")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -554,7 +560,28 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("DefaultTaxRate")
                         .HasColumnType("numeric");
 
+                    b.Property<string>("GstBusinessAddress")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GstBusinessName")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("GstRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("GstRegistrationNumber")
+                        .HasColumnType("text");
+
+                    b.Property<int>("GstType")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsReadOnly")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsSuspended")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
@@ -567,6 +594,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<string>("PaymentQrPayload")
                         .HasColumnType("text");
 
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
                     b.Property<string>("ReceiptFooter")
                         .HasColumnType("text");
 
@@ -574,6 +604,13 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("SuspendedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Timezone")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -586,6 +623,24 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Organizations");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.OrganizationRolePermission", b =>
+                {
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RoleName")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("OrganizationId", "RoleName", "PermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("OrganizationRolePermissions");
                 });
 
             modelBuilder.Entity("Pos.Domain.Entities.Payment", b =>
@@ -634,6 +689,44 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.ToTable("Payments");
                 });
 
+            modelBuilder.Entity("Pos.Domain.Entities.Permission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Module")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Permissions");
+                });
+
             modelBuilder.Entity("Pos.Domain.Entities.Plan", b =>
                 {
                     b.Property<Guid>("Id")
@@ -646,11 +739,38 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<bool>("HasAccounting")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasAdvancedReports")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasApi")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasDelivery")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasInventory")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasKitchen")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasPurchases")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("MaxMonthlyOrders")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxProducts")
+                        .HasColumnType("integer");
 
                     b.Property<int>("MaxStores")
                         .HasColumnType("integer");
@@ -666,6 +786,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasColumnType("text");
 
                     b.Property<decimal>("PriceMonthly")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("PriceYearly")
                         .HasColumnType("numeric");
 
                     b.Property<string>("Slug")
@@ -684,6 +807,74 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Plans");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.PlatformAnnouncement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PlatformAnnouncements");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.PlatformSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("PlatformSettings");
                 });
 
             modelBuilder.Entity("Pos.Domain.Entities.Product", b =>
@@ -867,6 +1058,29 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.RolePermission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RoleName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("RoleName", "PermissionId")
+                        .IsUnique();
+
+                    b.ToTable("RolePermissions");
                 });
 
             modelBuilder.Entity("Pos.Domain.Entities.Shift", b =>
@@ -1152,6 +1366,63 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.ToTable("Subscriptions");
                 });
 
+            modelBuilder.Entity("Pos.Domain.Entities.SubscriptionPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PeriodEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("PeriodStart")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProofImagePath")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("VerifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.HasIndex("PlanId");
+
+                    b.ToTable("SubscriptionPayments");
+                });
+
             modelBuilder.Entity("Pos.Domain.Entities.SupplyItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1416,7 +1687,7 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<Guid>("OrganizationId")
+                    b.Property<Guid?>("OrganizationId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("PasswordHash")
@@ -1614,6 +1885,25 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Pos.Domain.Entities.OrganizationRolePermission", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Entities.Permission", "Permission")
+                        .WithMany()
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+
+                    b.Navigation("Permission");
+                });
+
             modelBuilder.Entity("Pos.Domain.Entities.Payment", b =>
                 {
                     b.HasOne("Pos.Domain.Entities.Order", "Order")
@@ -1670,6 +1960,17 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.RolePermission", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.Permission", "Permission")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
                 });
 
             modelBuilder.Entity("Pos.Domain.Entities.Shift", b =>
@@ -1769,6 +2070,25 @@ namespace Pos.Infrastructure.Persistence.Migrations
 
                     b.HasOne("Pos.Domain.Entities.Plan", "Plan")
                         .WithMany("Subscriptions")
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+
+                    b.Navigation("Plan");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.SubscriptionPayment", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Entities.Plan", "Plan")
+                        .WithMany()
                         .HasForeignKey("PlanId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1878,6 +2198,11 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Navigation("Stores");
 
                     b.Navigation("Subscription");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.Permission", b =>
+                {
+                    b.Navigation("RolePermissions");
                 });
 
             modelBuilder.Entity("Pos.Domain.Entities.Plan", b =>

@@ -22,6 +22,8 @@ public static class DependencyInjection
         services.AddScoped<TokenService>();
         services.AddScoped<PaymentProviderFactory>();
         services.AddScoped<IPaymentProviderResolver>(sp => sp.GetRequiredService<PaymentProviderFactory>());
+        services.AddScoped<IPermissionService, PermissionService>();
+        services.AddScoped<IPermissionChecker, PermissionChecker>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IStoreService, StoreService>();
@@ -37,13 +39,14 @@ public static class DependencyInjection
 
         services.AddScoped<IPosDbContext>(sp => sp.GetRequiredService<PosDbContext>());
 
-        services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
+        services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.Password.RequiredLength = 8;
                 options.Password.RequireDigit = true;
                 options.Password.RequireUppercase = true;
                 options.User.RequireUniqueEmail = true;
             })
+            .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<PosDbContext>()
             .AddDefaultTokenProviders();
 

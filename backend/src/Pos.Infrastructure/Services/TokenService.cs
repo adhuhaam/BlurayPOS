@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Pos.Application.Common;
 using Pos.Domain.Entities;
 using Pos.Infrastructure.Identity;
 using Pos.Infrastructure.Persistence;
@@ -22,19 +23,24 @@ public class JwtSettings
     public int RefreshExpiryDays { get; set; } = 7;
 }
 
-public record TokenResponse(string AccessToken, string RefreshToken, DateTime ExpiresAt, Guid UserId, Guid OrganizationId, Guid? StoreId, IList<string> Roles);
+public record TokenResponse(
+    string AccessToken, string RefreshToken, DateTime ExpiresAt,
+    Guid UserId, Guid? OrganizationId, Guid? StoreId,
+    IList<string> Roles, IReadOnlyList<string> Permissions);
 
 public class TokenService(
     IConfiguration configuration,
     UserManager<ApplicationUser> userManager,
-    PosDbContext db)
+    PosDbContext db,
+    IPermissionService permissionService)
 {
     private readonly JwtSettings _settings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>() ?? new JwtSettings();
 
-    public async Task<TokenResponse> GenerateTokensAsync(ApplicationUser user, Guid? storeId, CancellationToken cancellationToken = default)
+    public async Task<TokenResponse> GenerateTokensAsync(
+        ApplicationUser user, Guid? storeId, IReadOnlyList<string> permissions, CancellationToken cancellationToken = default)
     {
         var roles = await userManager.GetRolesAsync(user);
-        var accessToken = BuildAccessToken(user, storeId, roles);
+        var accessToken = BuildAccessToken(user, storeId, roles, permissions);
         var refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
         var expires = DateTime.UtcNow.AddMinutes(_settings.ExpiryMinutes);
 
@@ -47,7 +53,7 @@ public class TokenService(
         });
         await db.SaveChangesAsync(cancellationToken);
 
-        return new TokenResponse(accessToken, refreshToken, expires, user.Id, user.OrganizationId, storeId, roles);
+        return new TokenResponse(accessToken, refreshToken, expires, user.Id, user.OrganizationId, storeId, roles, permissions);
     }
 
     public async Task<TokenResponse> RefreshAsync(string refreshToken, Guid? storeId, CancellationToken cancellationToken = default)
@@ -71,24 +77,31 @@ public class TokenService(
 
         stored.IsRevoked = true;
         var effectiveStoreId = storeId ?? stored.StoreId ?? user.DefaultStoreId;
-        return await GenerateTokensAsync(user, effectiveStoreId, cancellationToken);
+        var roles = await userManager.GetRolesAsync(user);
+        var permissions = await permissionService.GetPermissionsForRolesAsync(roles, user.OrganizationId, cancellationToken);
+        return await GenerateTokensAsync(user, effectiveStoreId, permissions, cancellationToken);
     }
 
-    private string BuildAccessToken(ApplicationUser user, Guid? storeId, IList<string> roles)
+    private string BuildAccessToken(ApplicationUser user, Guid? storeId, IList<string> roles, IReadOnlyList<string> permissions)
     {
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Email, user.Email ?? string.Empty),
             new(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
-            new("organizationId", user.OrganizationId.ToString()),
         };
+
+        if (user.OrganizationId.HasValue)
+            claims.Add(new Claim("organizationId", user.OrganizationId.Value.ToString()));
 
         if (storeId.HasValue)
             claims.Add(new Claim("storeId", storeId.Value.ToString()));
 
         foreach (var role in roles)
             claims.Add(new Claim(ClaimTypes.Role, role));
+
+        foreach (var permission in permissions)
+            claims.Add(new Claim("permission", permission));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

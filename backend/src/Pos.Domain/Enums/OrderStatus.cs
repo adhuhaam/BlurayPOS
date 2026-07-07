@@ -51,7 +51,11 @@ public enum StockTransferStatus
 public enum UserRole
 {
     SuperAdmin = 0,
-    OrgAdmin = 1,
-    StoreManager = 2,
-    Cashier = 3
+    OrgAdmin = 1,      // Manager (tenant-wide)
+    StoreManager = 2,  // Branch manager
+    Cashier = 3,
+    Kitchen = 4,
+    Delivery = 5,
+    Accountant = 6,
+    Waiter = 7
 }

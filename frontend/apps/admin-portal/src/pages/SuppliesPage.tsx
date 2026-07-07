@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { PlusIcon, PackageIcon, TrendingUpIcon, ClipboardListIcon, AlertTriangleIcon } from 'lucide-react';
-import { api, type SupplyItemDto, type SupplyLogDto, type StoreDto } from '@pos/api-client';
+import { api, ApiError, type SupplyItemDto, type SupplyLogDto, type StoreDto } from '@pos/api-client';
 import { PageHeader } from '@/components/page-header';
+import { CatalogWorkflowBanner } from '@/components/catalog-workflow-banner';
 import { FormSelect } from '@/components/form-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,44 +52,76 @@ export function SuppliesPage() {
   const lowStock = items.filter((i) => i.isLowStock);
   const stockValue = items.reduce((sum, i) => sum + i.currentStock * i.costPerUnit, 0);
 
+  const openAddItem = () => {
+    setEditItem(null);
+    setItemForm({ name: '', unit: 'piece', category: '', costPerUnit: '0', lowStockThreshold: '0' });
+    setItemDialog(true);
+  };
+
   const saveItem = async () => {
+    if (!itemForm.name.trim()) {
+      toast.error('Ingredient name is required');
+      return;
+    }
     try {
       if (editItem) {
         await api.updateSupplyItem(editItem.id, storeId, {
           name: itemForm.name, unit: itemForm.unit, category: itemForm.category || undefined,
           costPerUnit: Number(itemForm.costPerUnit), lowStockThreshold: Number(itemForm.lowStockThreshold),
         });
-        toast.success('Supply item updated');
+        toast.success('Ingredient updated');
       } else {
         await api.createSupplyItem({
           name: itemForm.name, unit: itemForm.unit, category: itemForm.category || undefined,
           costPerUnit: Number(itemForm.costPerUnit), lowStockThreshold: Number(itemForm.lowStockThreshold), storeId,
         });
-        toast.success('Supply item created');
+        toast.success('Ingredient created');
       }
       setItemDialog(false);
       load();
-    } catch { toast.error('Failed to save supply item'); }
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Failed to save ingredient');
+    }
   };
 
   const recordSupply = async () => {
+    if (!supplyForm.supplyItemId || !supplyForm.quantity) {
+      toast.error('Select an ingredient and enter quantity');
+      return;
+    }
     try {
       await api.recordSupply({
         storeId, supplyItemId: supplyForm.supplyItemId, quantity: Number(supplyForm.quantity),
         costPerUnit: supplyForm.costPerUnit ? Number(supplyForm.costPerUnit) : undefined,
         note: supplyForm.note || undefined,
       });
-      toast.success('Supply recorded');
+      toast.success('Delivery recorded');
       setSupplyForm({ supplyItemId: '', quantity: '', costPerUnit: '', note: '' });
       load();
-    } catch { toast.error('Failed to record supply'); }
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Failed to record supply');
+    }
   };
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Supplies & Ingredients" description="Ingredient stock, supply receiving, and usage logs" />
+      <PageHeader
+        title="Supplies & Ingredients"
+        description="Set up ingredients first — then link them to recipe products"
+        action={tab === 'stock' ? <Button onClick={openAddItem}><PlusIcon data-icon="inline-start" />Add Ingredient</Button> : undefined}
+      />
+
+      <CatalogWorkflowBanner active="supplies" />
+
+      <Alert>
+        <AlertDescription className="text-sm">
+          Step 1: Add ingredients here. Step 2: Create a recipe product on{' '}
+          <Link to="/products" className="font-medium underline">Products</Link> and link these ingredients to it.
+        </AlertDescription>
+      </Alert>
+
       <div className="flex flex-wrap items-center gap-4">
-        <FormSelect label="Store" value={storeId} onValueChange={setStoreId} options={stores.map((s) => ({ value: s.id, label: s.name }))} className="min-w-48" />
+        <FormSelect label="Branch" value={storeId} onValueChange={setStoreId} options={stores.map((s) => ({ value: s.id, label: s.name }))} className="min-w-48" />
         <div className="flex gap-2">
           {(['stock', 'supply', 'logs'] as Tab[]).map((t) => (
             <Button key={t} variant={tab === t ? 'default' : 'outline'} size="sm" onClick={() => setTab(t)}>
@@ -97,17 +132,28 @@ export function SuppliesPage() {
             </Button>
           ))}
         </div>
-        {tab === 'stock' && <Button className="ml-auto" onClick={() => { setEditItem(null); setItemForm({ name: '', unit: 'piece', category: '', costPerUnit: '0', lowStockThreshold: '0' }); setItemDialog(true); }}><PlusIcon data-icon="inline-start" />Add Ingredient</Button>}
       </div>
 
       {tab === 'stock' && (
         <>
           <div className="grid gap-4 sm:grid-cols-3">
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Items</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{items.length}</CardContent></Card>
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Ingredients</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{items.length}</CardContent></Card>
             <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Stock Value</CardTitle></CardHeader><CardContent className="text-2xl font-bold">${stockValue.toFixed(2)}</CardContent></Card>
             <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Low Stock</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-destructive">{lowStock.length}</CardContent></Card>
           </div>
-          {loading ? <Skeleton className="h-64" /> : (
+          {loading ? <Skeleton className="h-64" /> : items.length === 0 ? (
+            <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed py-16 text-center">
+              <PackageIcon className="size-10 text-muted-foreground" />
+              <div>
+                <p className="font-medium">No ingredients yet</p>
+                <p className="text-sm text-muted-foreground">Add ingredients like flour, milk, or packaging before building recipes.</p>
+              </div>
+              <Button onClick={openAddItem}>
+                <PlusIcon data-icon="inline-start" />
+                Add your first ingredient
+              </Button>
+            </div>
+          ) : (
             <div className="rounded-lg border">
               <Table>
                 <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Category</TableHead><TableHead>Stock</TableHead><TableHead>Cost/Unit</TableHead><TableHead>Status</TableHead><TableHead /></TableRow></TableHeader>
@@ -133,18 +179,31 @@ export function SuppliesPage() {
         <Card className="max-w-lg">
           <CardHeader><CardTitle>Record Supply Delivery</CardTitle></CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <FormSelect label="Ingredient" value={supplyForm.supplyItemId} onValueChange={(v) => setSupplyForm({ ...supplyForm, supplyItemId: v })} options={items.map((i) => ({ value: i.id, label: `${i.name} (${i.currentStock} ${i.unit})` }))} />
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2"><Label>Quantity</Label><Input type="number" step="0.0001" value={supplyForm.quantity} onChange={(e) => setSupplyForm({ ...supplyForm, quantity: e.target.value })} /></div>
-              <div className="flex flex-col gap-2"><Label>Cost/Unit (optional)</Label><Input type="number" step="0.01" value={supplyForm.costPerUnit} onChange={(e) => setSupplyForm({ ...supplyForm, costPerUnit: e.target.value })} /></div>
-            </div>
-            <div className="flex flex-col gap-2"><Label>Note</Label><Input value={supplyForm.note} onChange={(e) => setSupplyForm({ ...supplyForm, note: e.target.value })} /></div>
-            <Button onClick={recordSupply}>Record Supply</Button>
+            {items.length === 0 ? (
+              <div className="flex flex-col gap-3 text-center">
+                <p className="text-sm text-muted-foreground">Add ingredients in the Stock tab before recording deliveries.</p>
+                <Button variant="outline" onClick={openAddItem}><PlusIcon data-icon="inline-start" />Add ingredient</Button>
+              </div>
+            ) : (
+              <>
+                <FormSelect label="Ingredient" value={supplyForm.supplyItemId} onValueChange={(v) => setSupplyForm({ ...supplyForm, supplyItemId: v })} options={[{ value: '', label: 'Select ingredient' }, ...items.map((i) => ({ value: i.id, label: `${i.name} (${i.currentStock} ${i.unit} on hand)` }))]} />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2"><Label>Quantity received</Label><Input type="number" step="0.0001" min="0" value={supplyForm.quantity} onChange={(e) => setSupplyForm({ ...supplyForm, quantity: e.target.value })} /></div>
+                  <div className="flex flex-col gap-2"><Label>Cost/unit (optional)</Label><Input type="number" step="0.01" min="0" value={supplyForm.costPerUnit} onChange={(e) => setSupplyForm({ ...supplyForm, costPerUnit: e.target.value })} /></div>
+                </div>
+                <div className="flex flex-col gap-2"><Label>Note</Label><Input placeholder="e.g. Supplier invoice #1234" value={supplyForm.note} onChange={(e) => setSupplyForm({ ...supplyForm, note: e.target.value })} /></div>
+                <Button onClick={recordSupply}>Record delivery</Button>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
 
-      {tab === 'logs' && (loading ? <Skeleton className="h-64" /> : (
+      {tab === 'logs' && (loading ? <Skeleton className="h-64" /> : logs.length === 0 ? (
+        <div className="rounded-lg border border-dashed py-12 text-center text-sm text-muted-foreground">
+          No supply logs yet. Record a delivery in the Receive tab.
+        </div>
+      ) : (
         <div className="rounded-lg border">
           <Table>
             <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Item</TableHead><TableHead>Qty</TableHead><TableHead>Cost</TableHead><TableHead>Note</TableHead></TableRow></TableHeader>
@@ -167,12 +226,12 @@ export function SuppliesPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>{editItem ? 'Edit Ingredient' : 'New Ingredient'}</DialogTitle></DialogHeader>
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2"><Label>Name</Label><Input value={itemForm.name} onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} /></div>
+            <div className="flex flex-col gap-2"><Label>Name</Label><Input autoFocus placeholder="e.g. Chicken breast" value={itemForm.name} onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} /></div>
             <FormSelect label="Unit" value={itemForm.unit} onValueChange={(v) => setItemForm({ ...itemForm, unit: v })} options={UNITS.map((u) => ({ value: u, label: u }))} />
-            <div className="flex flex-col gap-2"><Label>Category</Label><Input value={itemForm.category} onChange={(e) => setItemForm({ ...itemForm, category: e.target.value })} placeholder="e.g. Dairy, Produce" /></div>
+            <div className="flex flex-col gap-2"><Label>Category <span className="text-muted-foreground">(optional)</span></Label><Input value={itemForm.category} onChange={(e) => setItemForm({ ...itemForm, category: e.target.value })} placeholder="e.g. Meat, Dairy" /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2"><Label>Cost/Unit</Label><Input type="number" step="0.01" value={itemForm.costPerUnit} onChange={(e) => setItemForm({ ...itemForm, costPerUnit: e.target.value })} /></div>
-              <div className="flex flex-col gap-2"><Label>Low Stock Alert</Label><Input type="number" step="0.0001" value={itemForm.lowStockThreshold} onChange={(e) => setItemForm({ ...itemForm, lowStockThreshold: e.target.value })} /></div>
+              <div className="flex flex-col gap-2"><Label>Cost/unit</Label><Input type="number" step="0.01" min="0" value={itemForm.costPerUnit} onChange={(e) => setItemForm({ ...itemForm, costPerUnit: e.target.value })} /></div>
+              <div className="flex flex-col gap-2"><Label>Low stock alert</Label><Input type="number" step="0.0001" min="0" value={itemForm.lowStockThreshold} onChange={(e) => setItemForm({ ...itemForm, lowStockThreshold: e.target.value })} /></div>
             </div>
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setItemDialog(false)}>Cancel</Button><Button onClick={saveItem}>Save</Button></DialogFooter>

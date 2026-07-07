@@ -10,7 +10,7 @@ import {
 type Option = { value: string; label: string };
 
 type FormSelectProps = {
-  label: string;
+  label?: string;
   value: string;
   onValueChange: (value: string) => void;
   options: Option[];
@@ -21,7 +21,7 @@ type FormSelectProps = {
 export function FormSelect({ label, value, onValueChange, options, placeholder, className }: FormSelectProps) {
   return (
     <div className={`flex flex-col gap-2 ${className ?? ''}`}>
-      <Label>{label}</Label>
+      {label ? <Label>{label}</Label> : null}
       <Select value={value} onValueChange={onValueChange}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder={placeholder ?? 'Select...'} />

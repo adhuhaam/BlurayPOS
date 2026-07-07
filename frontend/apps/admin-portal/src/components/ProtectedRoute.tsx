@@ -1,11 +1,10 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldAlertIcon } from 'lucide-react';
 
+/** Requires authentication. Cashier / tenant checks live in TenantOnlyRoute. */
 export function ProtectedRoute() {
-  const { isAuthenticated, loading, roles } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
@@ -17,20 +16,6 @@ export function ProtectedRoute() {
   }
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-
-  if (roles.includes('Cashier') && !roles.some((r) => ['StoreManager', 'OrgAdmin', 'SuperAdmin'].includes(r))) {
-    return (
-      <div className="flex h-screen items-center justify-center p-8">
-        <Alert className="max-w-md" variant="destructive">
-          <ShieldAlertIcon />
-          <AlertTitle>Access Denied</AlertTitle>
-          <AlertDescription>
-            Cashier accounts cannot access the admin portal. Use the POS terminal instead.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
 
   return <Outlet />;
 }

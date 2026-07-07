@@ -8,6 +8,7 @@ public record ListPlansQuery : IRequest<IList<PlanDto>>;
 public record GetSubscriptionQuery : IRequest<SubscriptionDto?>;
 public record ChangePlanCommand(ChangePlanRequest Request) : IRequest<SubscriptionDto>;
 public record CreateCheckoutCommand(ChangePlanRequest Request) : IRequest<CheckoutResponse>;
+public record SubmitSubscriptionPaymentCommand(SubmitSubscriptionPaymentRequest Request) : IRequest<SubscriptionPaymentDto>;
 
 public class ListPlansQueryHandler(ISubscriptionService subscriptionService) : IRequestHandler<ListPlansQuery, IList<PlanDto>>
 {
@@ -31,4 +32,10 @@ public class CreateCheckoutCommandHandler(ISubscriptionService subscriptionServi
 {
     public Task<CheckoutResponse> Handle(CreateCheckoutCommand command, CancellationToken cancellationToken) =>
         subscriptionService.CreateCheckoutAsync(command.Request, cancellationToken);
+}
+
+public class SubmitSubscriptionPaymentCommandHandler(ISubscriptionService subscriptionService) : IRequestHandler<SubmitSubscriptionPaymentCommand, SubscriptionPaymentDto>
+{
+    public Task<SubscriptionPaymentDto> Handle(SubmitSubscriptionPaymentCommand command, CancellationToken cancellationToken) =>
+        subscriptionService.SubmitPaymentAsync(command.Request, cancellationToken);
 }

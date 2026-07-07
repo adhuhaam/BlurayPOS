@@ -25,7 +25,19 @@ export interface LoginResponse {
   expiresAt: string;
   user: UserDto;
   roles: string[];
+  permissions: string[];
   stores: StoreDto[];
+}
+
+export interface RegisterRequest {
+  businessName: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+  email: string;
+  password: string;
+  phone?: string;
+  currency?: string;
+  timezone?: string;
 }
 
 export interface UserDto {
@@ -33,7 +45,7 @@ export interface UserDto {
   email: string;
   firstName: string;
   lastName: string;
-  organizationId: string;
+  organizationId: string | null;
   defaultStoreId: string | null;
 }
 
@@ -45,6 +57,26 @@ export interface UserListItemDto {
   role: string;
   defaultStoreId: string | null;
   isActive: boolean;
+}
+
+export interface PlatformUserListItemDto {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  organizationId: string | null;
+  organizationName: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface UpdatePlatformUserRequest {
+  firstName: string;
+  lastName: string;
+  role: string;
+  isActive: boolean;
+  newPassword?: string;
 }
 
 export interface RefreshTokenRequest {
@@ -76,7 +108,15 @@ export interface OrganizationDto {
 export interface MeResponse {
   user: UserDto;
   roles: string[];
+  permissions: string[];
   subscription: SubscriptionDto | null;
+}
+
+export interface RolePermissionsDto {
+  role: string;
+  permissions: string[];
+  defaults: string[];
+  isCustomized: boolean;
 }
 
 export interface PlanDto {
@@ -85,10 +125,47 @@ export interface PlanDto {
   slug: string;
   description: string | null;
   priceMonthly: number;
+  priceYearly: number;
   maxStores: number;
   maxUsers: number;
   maxTerminals: number;
+  maxProducts: number;
+  maxMonthlyOrders: number;
+  hasInventory: boolean;
+  hasKitchen: boolean;
+  hasDelivery: boolean;
+  hasAccounting: boolean;
+  hasAdvancedReports: boolean;
+  hasApi: boolean;
+  hasPurchases: boolean;
   sortOrder: number;
+  isActive: boolean;
+}
+
+export interface PlanAdminDto extends PlanDto {
+  subscriberCount: number;
+}
+
+export interface UpsertPlanRequest {
+  name: string;
+  slug: string;
+  description?: string;
+  priceMonthly: number;
+  priceYearly: number;
+  maxStores: number;
+  maxUsers: number;
+  maxTerminals: number;
+  maxProducts: number;
+  maxMonthlyOrders: number;
+  hasInventory: boolean;
+  hasKitchen: boolean;
+  hasDelivery: boolean;
+  hasAccounting: boolean;
+  hasAdvancedReports: boolean;
+  hasApi: boolean;
+  hasPurchases: boolean;
+  sortOrder: number;
+  isActive: boolean;
 }
 
 export interface SubscriptionDto {
@@ -97,25 +174,77 @@ export interface SubscriptionDto {
   planName: string;
   planSlug: string;
   priceMonthly: number;
+  priceYearly: number;
   status: string;
   currentPeriodStart: string;
   currentPeriodEnd: string;
   trialEndsAt: string | null;
   maxStores: number;
   maxUsers: number;
+  maxProducts: number;
+  maxMonthlyOrders: number;
+  hasKitchen: boolean;
+  hasDelivery: boolean;
+  hasAccounting: boolean;
+  hasAdvancedReports: boolean;
+  hasApi: boolean;
   storeCount: number;
   userCount: number;
+  isReadOnly: boolean;
 }
 
 export interface OrganizationListItemDto {
   id: string;
   name: string;
   slug: string;
+  planId: string | null;
   planName: string;
   subscriptionStatus: string;
+  isSuspended: boolean;
+  isReadOnly: boolean;
   storeCount: number;
   userCount: number;
   createdAt: string;
+}
+
+export interface OrganizationDetailDto {
+  id: string;
+  name: string;
+  slug: string;
+  businessEmail: string | null;
+  phone: string | null;
+  address: string | null;
+  timezone: string;
+  currency: string;
+  defaultTaxRate: number;
+  receiptHeader: string | null;
+  receiptFooter: string | null;
+  paymentQrPayload: string | null;
+  paymentInstructions: string | null;
+  isSuspended: boolean;
+  isReadOnly: boolean;
+  planId: string | null;
+  planName: string;
+  subscriptionStatus: string;
+  currentPeriodEnd: string | null;
+  storeCount: number;
+  userCount: number;
+  createdAt: string;
+}
+
+export interface UpdatePlatformOrganizationRequest {
+  name: string;
+  businessEmail?: string;
+  phone?: string;
+  address?: string;
+  timezone: string;
+  currency: string;
+  defaultTaxRate: number;
+  receiptHeader?: string;
+  receiptFooter?: string;
+  paymentQrPayload?: string;
+  paymentInstructions?: string;
+  isReadOnly: boolean;
 }
 
 export interface CreateOrganizationRequest {
@@ -146,6 +275,70 @@ export interface UpdateOrganizationRequest {
 
 export interface ChangePlanRequest {
   planId: string;
+}
+
+export interface SubmitSubscriptionPaymentRequest {
+  planId: string;
+  amount: number;
+  method: 'BankTransfer' | 'Cash';
+  proofImagePath?: string;
+  notes?: string;
+}
+
+export interface SubscriptionPaymentDto {
+  id: string;
+  organizationId: string;
+  organizationName: string;
+  planId: string;
+  planName: string;
+  amount: number;
+  method: string;
+  status: string;
+  proofImagePath: string | null;
+  notes: string | null;
+  periodStart: string;
+  periodEnd: string;
+  createdAt: string;
+  verifiedAt: string | null;
+}
+
+export interface PlatformSettingsDto {
+  platformName: string;
+  platformTagline: string;
+  supportEmail: string;
+  defaultCurrency: string;
+  defaultTimezone: string;
+  allowSelfRegistration: boolean;
+  maintenanceMode: boolean;
+  maintenanceMessage: string | null;
+  billingBankName: string;
+  billingBankAccount: string;
+  billingBankInstructions: string;
+  billingContactEmail: string;
+  announcementTitle: string | null;
+  announcementBody: string | null;
+  announcementActive: boolean;
+  organizationCount: number;
+  userCount: number;
+  pendingPaymentCount: number;
+}
+
+export interface UpdatePlatformSettingsRequest {
+  platformName: string;
+  platformTagline: string;
+  supportEmail: string;
+  defaultCurrency: string;
+  defaultTimezone: string;
+  allowSelfRegistration: boolean;
+  maintenanceMode: boolean;
+  maintenanceMessage?: string;
+  billingBankName: string;
+  billingBankAccount: string;
+  billingBankInstructions: string;
+  billingContactEmail: string;
+  announcementTitle?: string;
+  announcementBody?: string;
+  announcementActive: boolean;
 }
 
 export interface CheckoutResponse {
@@ -535,4 +728,13 @@ export interface CreateUserRequest {
   role: string;
   defaultStoreId?: string;
   storeIds?: string[];
+}
+
+export interface UpdateUserRequest {
+  firstName: string;
+  lastName: string;
+  role: string;
+  defaultStoreId?: string;
+  isActive: boolean;
+  newPassword?: string;
 }

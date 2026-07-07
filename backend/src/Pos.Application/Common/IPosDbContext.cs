@@ -31,5 +31,8 @@ public interface IPosDbContext
     DbSet<SyncCheckpoint> SyncCheckpoints { get; }
     DbSet<SyncEvent> SyncEvents { get; }
     DbSet<RefreshToken> RefreshTokens { get; }
+    DbSet<Permission> Permissions { get; }
+    DbSet<RolePermission> RolePermissions { get; }
+    DbSet<SubscriptionPayment> SubscriptionPayments { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
