@@ -19,6 +19,10 @@ Repository: [github.com/adhuhaam/BlurayPOS](https://github.com/adhuhaam/BlurayPO
 | **Payments** | Cash, card, bank transfer with slip upload + payment QR on receipt |
 | **Operations** | Shifts & Z-reports, SignalR live updates, idempotent orders, refresh tokens |
 
+### Roadmap (planned modules)
+
+The full product vision is specified in [docs/SAAS_REQUIREMENTS.md](docs/SAAS_REQUIREMENTS.md) with delivery status tracked in [docs/DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md). Planned/partial modules beyond the shipped core include: branch management, restaurant table management, QR ordering, customer display, loyalty & gift cards, promotions engine, advanced kitchen display, purchases & suppliers, delivery, CRM & marketing, reservations, employee/cash/device management, notification center, Maldives GST accounting, public REST API, offline mode, platform feature flags, and AI features.
+
 ---
 
 ## Tech Stack
@@ -27,7 +31,7 @@ Repository: [github.com/adhuhaam/BlurayPOS](https://github.com/adhuhaam/BlurayPO
 |-------|--------|
 | Backend | ASP.NET Core 9, EF Core, PostgreSQL, MediatR (CQRS), JWT + Identity |
 | Frontend | React 19, Vite, npm workspaces, Tailwind / shadcn (admin) |
-| DevOps | Docker, GitHub Actions CI, integration tests |
+| DevOps | Docker & Docker Compose, GitHub Actions (CI + auto-deploy), Caddy (auto-HTTPS), DigitalOcean droplet |
 
 ---
 
@@ -87,7 +91,7 @@ npm run dev
 VITE_API_URL=http://localhost:5142
 ```
 
-Set in `frontend/apps/pos-terminal/.env` and `frontend/apps/admin-portal/.env` if needed.
+Set in `frontend/apps/pos-terminal/.env` and `frontend/apps/admin-portal/.env` if needed. When unset, the API client falls back to `http://localhost:5142`. `VITE_API_URL` is **read at build time** and inlined into the bundle, so production images must set it before `npm run build` (the deploy stack does this automatically — see [Deployment & Hosting](#deployment--hosting)).
 
 ---
 
@@ -139,7 +143,7 @@ Public: `/register` — self-service store signup
 
 ## SaaS & Billing
 
-- **Plans**: Free and Pro (MVR 14,999/yr) — yearly billing with feature flags
+- **Plans**: Free and Pro (MVR 14,999/yr) seeded today — yearly billing with feature flags. A **Basic** tier is specified in the plan ([SAAS_REQUIREMENTS.md](docs/SAAS_REQUIREMENTS.md)) but not yet seeded.
 - **Limits**: Max stores, users, products, monthly orders per plan
 - **Self-registration**: `POST /api/auth/register` — creates tenant + manager + Free plan
 - **SuperAdmin**: tenant CRUD, suspend/activate, plan change, password reset, payment verification
@@ -156,6 +160,9 @@ Public: `/register` — self-service store signup
 | [docs/DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md) | Phased delivery status |
 | [docs/GST_MALDIVES.md](docs/GST_MALDIVES.md) | Maldives GST / MIRA accounting module |
 | [docs/hosting-plan.md](docs/hosting-plan.md) | **DigitalOcean droplet hosting + GitHub auto-deploy plan** |
+| [docs/deployment.md](docs/deployment.md) | Generic cloud deployment reference |
+| [docs/architecture.md](docs/architecture.md) | System architecture |
+| [AGENTS.md](AGENTS.md) | Cursor Cloud / agent development notes |
 
 ---
 
@@ -256,28 +263,98 @@ BlurayPOS/
 │       ├── api-client/
 │       ├── offline-sync/
 │       └── ui/
+├── deploy/                      # Production stack (DigitalOcean droplet)
+│   ├── docker-compose.prod.yml  # db + api + edge (Caddy)
+│   ├── Dockerfile.web           # builds both SPAs → Caddy image
+│   ├── Caddyfile                # TLS + subdomain routing + API proxy
+│   ├── provision.sh             # one-time droplet bootstrap
+│   ├── deploy.sh                # pull + rebuild + restart
+│   └── .env.prod.example
 ├── docs/
-│   ├── DEVELOPMENT_HANDOFF.md  # Full context for laptop move / Cursor sessions
+│   ├── DEVELOPMENT_HANDOFF.md    # Full context for laptop move / Cursor sessions
+│   ├── master-plan.md           # Extended master plan & requirements
 │   ├── SAAS_REQUIREMENTS.md      # Canonical product spec
 │   ├── TERMINOLOGY.md
 │   ├── DEVELOPMENT_ROADMAP.md
 │   ├── GST_MALDIVES.md
+│   ├── hosting-plan.md          # DigitalOcean droplet + CD plan
 │   ├── architecture.md
 │   └── deployment.md
-├── docker-compose.yml
-├── Dockerfile
-└── .github/workflows/ci.yml
+├── AGENTS.md                    # Cursor Cloud / agent dev notes
+├── docker-compose.yml           # local dev (db + api)
+├── Dockerfile                   # API image
+└── .github/workflows/
+    ├── ci.yml                   # build + test
+    └── deploy.yml               # auto-deploy to droplet on push to main
 ```
 
 ---
 
-## Docker
+## Docker (local)
 
-```powershell
+Runs PostgreSQL + the API (see `docker-compose.yml`):
+
+```bash
 docker compose up --build
 ```
 
-See [docs/deployment.md](docs/deployment.md) for production deployment.
+- API: **http://localhost:5142** · Postgres: **localhost:5432**
+- Run the frontends separately with `npm run dev`.
+
+---
+
+## Deployment & Hosting
+
+Full guide: **[docs/hosting-plan.md](docs/hosting-plan.md)** (generic cloud reference: [docs/deployment.md](docs/deployment.md)).
+
+### Production stack (single DigitalOcean droplet)
+
+One Ubuntu droplet runs everything via [`deploy/docker-compose.prod.yml`](deploy/docker-compose.prod.yml), with **Caddy** as the edge (automatic Let's Encrypt HTTPS):
+
+| Subdomain | Serves |
+|-----------|--------|
+| `admin.<domain>` | Admin Portal SPA |
+| `pos.<domain>` | POS Terminal PWA |
+| `api.<domain>` | .NET API + `/hubs/pos` (SignalR), reverse-proxied |
+
+```
+edge (Caddy, TLS)  →  api (.NET 9 :8080)  →  db (postgres:17, volume)
+       │  serves /srv/admin + /srv/pos static bundles
+```
+
+First-time setup (details in the hosting plan):
+
+```bash
+# on a fresh droplet, as root
+bash <(curl -fsSL https://raw.githubusercontent.com/adhuhaam/BlurayPOS/main/deploy/provision.sh)
+cd /opt/bluraypos
+cp deploy/.env.prod.example deploy/.env.prod   # set DOMAIN, ACME_EMAIL, POSTGRES_PASSWORD, JWT_SECRET
+bash deploy/deploy.sh
+```
+
+### Continuous deployment (GitHub → droplet)
+
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) runs on every push/merge to `main`/`master`: it SSHes into the droplet and runs `deploy/deploy.sh` (`git reset --hard origin/<branch>` → `docker compose up -d --build`).
+
+Required GitHub Actions repository secrets:
+
+| Secret | Value |
+|--------|-------|
+| `DEPLOY_SSH_HOST` | droplet public IP / hostname |
+| `DEPLOY_SSH_USER` | SSH user (`root` or a deploy user) |
+| `DEPLOY_SSH_KEY` | private SSH key authorized on the droplet |
+| `DEPLOY_SSH_PORT` | *(optional)* SSH port, defaults to `22` |
+
+> The `.env.prod` template defaults to `ASPNETCORE_ENVIRONMENT=Development` for a frictionless first boot (auto-migrate + seed plans/Super Admin/demo data). See the hosting plan's **Production hardening** section before going live.
+
+---
+
+## CI
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on push/PR to `main`/`master`:
+
+- **backend**: `dotnet restore` → `build` → `test` on `backend/Pos.slnx`
+- **frontend**: `npm ci` → `npm run build` in `frontend/`
 
 ---
 
