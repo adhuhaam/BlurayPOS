@@ -1,0 +1,71 @@
+# Production stack for a single DigitalOcean droplet.
+# Run from the repo root on the droplet:
+#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.prod up -d --build
+#
+# Build context is the repo root (..) so the API Dockerfile and the web build
+# can both see backend/ and frontend/.
+name: bluraypos
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env.prod}
+      POSTGRES_DB: ${POSTGRES_DB:-pos}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-pos}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      # NOTE: Development runs EF migrations + the demo seeder (plans, Super Admin,
+      # demo store) automatically on startup and exposes Swagger. This is the
+      # least-friction first bring-up. See docs/hosting-plan.md → "Production
+      # hardening" before going live with real data.
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=${POSTGRES_DB:-pos};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}
+      Jwt__Secret: ${JWT_SECRET:?set JWT_SECRET (min 32 chars) in deploy/.env.prod}
+      Jwt__Issuer: ${JWT_ISSUER:-PosApi}
+      Jwt__Audience: ${JWT_AUDIENCE:-PosClients}
+      Cors__Origins__0: https://admin.${DOMAIN:?set DOMAIN in deploy/.env.prod}
+      Cors__Origins__1: https://pos.${DOMAIN}
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8080"
+
+  edge:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+      args:
+        VITE_API_URL: https://api.${DOMAIN}
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in deploy/.env.prod}
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pg_data:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,34 @@
+name: Deploy to droplet
+
+# Pushes to main/master (i.e. after a PR merge) trigger a deploy.
+# The droplet must already be provisioned (see deploy/provision.sh) and these
+# repository secrets must be set:
+#   DEPLOY_SSH_HOST  – droplet public IP or hostname
+#   DEPLOY_SSH_USER  – SSH user (e.g. root or a deploy user)
+#   DEPLOY_SSH_KEY   – private SSH key authorized on the droplet
+#   DEPLOY_SSH_PORT  – (optional) SSH port, defaults to 22
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            export APP_DIR=/opt/bluraypos
+            export DEPLOY_BRANCH=${{ github.ref_name }}
+            bash "$APP_DIR/deploy/deploy.sh"

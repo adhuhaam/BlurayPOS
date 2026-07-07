@@ -1,0 +1,28 @@
+# Automatic HTTPS (Let's Encrypt) for all three subdomains.
+# Requires DNS A records for api./admin./pos.<DOMAIN> pointing at the droplet,
+# and ports 80 + 443 open. DOMAIN and ACME_EMAIL come from the environment.
+{
+	email {$ACME_EMAIL}
+}
+
+# API + SignalR websocket (reverse_proxy upgrades websockets automatically).
+api.{$DOMAIN} {
+	encode gzip zstd
+	reverse_proxy api:8080
+}
+
+# Admin Portal SPA
+admin.{$DOMAIN} {
+	encode gzip zstd
+	root * /srv/admin
+	try_files {path} /index.html
+	file_server
+}
+
+# POS Terminal SPA (PWA)
+pos.{$DOMAIN} {
+	encode gzip zstd
+	root * /srv/pos
+	try_files {path} /index.html
+	file_server
+}

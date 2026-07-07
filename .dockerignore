@@ -1,0 +1,10 @@
+# Keep Docker build contexts small and reproducible.
+**/node_modules
+**/bin
+**/obj
+**/dist
+**/.vs
+**/.idea
+.git
+*.log
+deploy/.env.prod
