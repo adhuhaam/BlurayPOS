@@ -150,6 +150,7 @@ Public: `/register` — self-service store signup
 | Doc | Purpose |
 |-----|---------|
 | [docs/DEVELOPMENT_HANDOFF.md](docs/DEVELOPMENT_HANDOFF.md) | **Full project memory — read when moving machines or starting new Cursor sessions** |
+| [docs/master-plan.md](docs/master-plan.md) | Extended master plan & requirements |
 | [docs/SAAS_REQUIREMENTS.md](docs/SAAS_REQUIREMENTS.md) | Canonical SaaS architecture spec |
 | [docs/TERMINOLOGY.md](docs/TERMINOLOGY.md) | Product ↔ code naming |
 | [docs/DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md) | Phased delivery status |
