@@ -332,11 +332,11 @@ cp deploy/.env.prod.example deploy/.env.prod   # set DOMAIN, ACME_EMAIL, POSTGRE
 bash deploy/deploy.sh
 ```
 
-### Continuous deployment (GitHub → droplet)
+### Deployment (manual)
 
-[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) runs on every push/merge to `main`/`master`: it SSHes into the droplet and runs `deploy/deploy.sh` (`git reset --hard origin/<branch>` → `docker compose up -d --build`).
+Deploys are **manual** (auto-deploy on push is disabled). Run `bash deploy/deploy.sh` on the droplet, or trigger [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) by hand from the Actions tab (it's `workflow_dispatch`-only). On small droplets (≤ 1 GB RAM), build the images off-box and ship them with `docker save | ssh … docker load`, then `SKIP_BUILD=1 bash deploy/deploy.sh` — see [docs/hosting-plan.md](docs/hosting-plan.md) §5.2.
 
-Required GitHub Actions repository secrets:
+If you enable the workflow, add these GitHub Actions repository secrets:
 
 | Secret | Value |
 |--------|-------|

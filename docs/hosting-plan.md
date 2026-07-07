@@ -119,19 +119,39 @@ immediately with the demo credentials in the root `README.md`.
 
 ---
 
-## 5. Continuous deployment (GitHub → droplet)
+## 5. Deployment (manual)
 
-[`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) runs on every push to
-`main`/`master` (i.e. after a PR merge) and on manual dispatch. It SSHes into the droplet
-and runs `deploy/deploy.sh`, which does `git reset --hard origin/<branch>` then
-`docker compose ... up -d --build`. A `concurrency` group prevents overlapping deploys.
+Deploys are **manual by choice** — auto-deploy on git push is disabled.
 
+- **On the droplet:** `bash /opt/bluraypos/deploy/deploy.sh` (add `SKIP_BUILD=1` to use pre-loaded images on low-memory boxes — see §5.2).
+- **From GitHub (optional):** [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) is `workflow_dispatch`-only — trigger it by hand from the Actions tab. It SSHes in and runs `deploy/deploy.sh`.
+
+### 5.1 Build on the droplet (>= 2 GB RAM)
+`deploy/deploy.sh` runs `docker compose ... up -d --build`, rebuilding the .NET image when
+backend files change and the SPA image when frontend files change.
+
+### 5.2 Low-memory droplets (build off-box, ship images)
+On **512 MB–1 GB** droplets, building the .NET SDK image on the box OOMs/thrashes (it can
+render the droplet unresponsive). Instead, build on a bigger machine and ship the small
+runtime images (api ≈ 240 MB, edge ≈ 65 MB):
+
+```bash
+# on a build machine with Docker + the repo checked out
+docker build -t bluraypos-api:latest -f Dockerfile .
+docker build -t bluraypos-edge:latest -f deploy/Dockerfile.web \
+  --build-arg VITE_API_URL=https://api.<domain> .
+
+# ship both images to the droplet
+docker save bluraypos-api:latest bluraypos-edge:latest | gzip | \
+  ssh root@<droplet-ip> 'gunzip | docker load'
+
+# start on the droplet without building
+ssh root@<droplet-ip> 'cd /opt/bluraypos && SKIP_BUILD=1 bash deploy/deploy.sh'
+# (or: docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.prod up -d --no-build)
 ```
-merge PR → push to main → GitHub Actions → ssh droplet → git pull → docker compose up -d --build
-```
 
-The .NET image is rebuilt only when backend files change (Docker layer cache); the SPA
-image rebuilds when frontend files change.
+The compose file pins `image: bluraypos-api` / `bluraypos-edge`, so `--no-build` reuses the
+loaded images. Postgres is pulled directly from Docker Hub on the droplet.
 
 ### Required GitHub repository secrets
 Add under **GitHub → repo → Settings → Secrets and variables → Actions**:
