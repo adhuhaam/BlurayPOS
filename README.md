@@ -149,6 +149,7 @@ Public: `/register` — self-service store signup
 
 | Doc | Purpose |
 |-----|---------|
+| [docs/DEVELOPMENT_HANDOFF.md](docs/DEVELOPMENT_HANDOFF.md) | **Full project memory — read when moving machines or starting new Cursor sessions** |
 | [docs/SAAS_REQUIREMENTS.md](docs/SAAS_REQUIREMENTS.md) | Canonical SaaS architecture spec |
 | [docs/TERMINOLOGY.md](docs/TERMINOLOGY.md) | Product ↔ code naming |
 | [docs/DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md) | Phased delivery status |
@@ -254,6 +255,7 @@ BlurayPOS/
 │       ├── offline-sync/
 │       └── ui/
 ├── docs/
+│   ├── DEVELOPMENT_HANDOFF.md  # Full context for laptop move / Cursor sessions
 │   ├── SAAS_REQUIREMENTS.md      # Canonical product spec
 │   ├── TERMINOLOGY.md
 │   ├── DEVELOPMENT_ROADMAP.md
