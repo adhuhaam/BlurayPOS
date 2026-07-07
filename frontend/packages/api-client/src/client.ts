@@ -10,8 +10,12 @@ const STORE_ID_KEY = 'pos_store_id';
 
 export function getApiBaseUrl(): string {
   try {
-    const meta = import.meta as { env?: { VITE_API_URL?: string } };
-    if (meta.env?.VITE_API_URL) return meta.env.VITE_API_URL;
+    // Reference `import.meta.env` literally so Vite statically inlines the
+    // build-time VITE_API_URL into the bundle. Aliasing it via a local
+    // variable (e.g. `const m = import.meta; m.env`) prevents inlining, which
+    // would leave production builds pointing at the localhost fallback.
+    const env = import.meta.env as unknown as { VITE_API_URL?: string } | undefined;
+    if (env?.VITE_API_URL) return env.VITE_API_URL;
   } catch {
     // not in a Vite environment
   }
