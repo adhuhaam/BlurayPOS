@@ -1,5 +1,9 @@
 # Deployment Guide
 
+> For the concrete, opinionated **DigitalOcean droplet** setup with automatic HTTPS and
+> GitHub-push auto-deploy, see [hosting-plan.md](./hosting-plan.md). This guide is the
+> generic, cloud-agnostic reference.
+
 ## Overview
 
 This guide covers deploying Enterprise POS to a cloud environment. The recommended stack:

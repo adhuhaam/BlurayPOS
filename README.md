@@ -155,6 +155,7 @@ Public: `/register` — self-service store signup
 | [docs/TERMINOLOGY.md](docs/TERMINOLOGY.md) | Product ↔ code naming |
 | [docs/DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md) | Phased delivery status |
 | [docs/GST_MALDIVES.md](docs/GST_MALDIVES.md) | Maldives GST / MIRA accounting module |
+| [docs/hosting-plan.md](docs/hosting-plan.md) | **DigitalOcean droplet hosting + GitHub auto-deploy plan** |
 
 ---
 
