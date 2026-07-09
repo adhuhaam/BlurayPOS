@@ -3,7 +3,7 @@
 > **Purpose:** Complete context for moving dev environment to another laptop or onboarding a new Cursor session.  
 > **Location:** `memory-plan/` — living memory & plans (update when features or architecture change).  
 > **Repository:** [github.com/adhuhaam/BlurayPOS](https://github.com/adhuhaam/BlurayPOS)  
-> **Last updated:** July 2026 — Android preview APK build (production API), API port fallback (5147/5148)
+> **Last updated:** July 2026 — Android v0.7.0 production release APK, GitHub Actions removed, manual deploy
 
 ---
 
@@ -140,6 +140,18 @@ Demo tenant: slug `demo`, currency MVR, **BusinessType: Hybrid**, on **Pro** pla
 ## 5. Session history — what was built (conversation memory)
 
 This section captures work done across Cursor sessions so nothing is lost.
+
+### 5.0h Android v0.7.0 production release (July 2026)
+
+| Item | Detail |
+|------|--------|
+| Version | **0.7.0** (`versionCode` 15), signed release APK |
+| Build | `./scripts/build-android-release.sh apk` — fixes: keystore path (`rootProject.file`), Gradle 2 GB heap for R8 |
+| Archive | `docs/apk releases/BlurayPOS-v0.7.0-release.apk` (committed) |
+| Phone | `adb push` → `/sdcard/Download/` on connected device |
+| Keystore | `terminal_app/bluraypos-release.jks` + `keystore.properties` — local only, gitignored |
+| CI | Removed `.github/workflows/ci.yml` + `deploy.yml` (failed without droplet secrets; noisy notifications) |
+| Deploy | Manual: `bash scripts/push-to-droplet.sh` — see [PRODUCTION_INFRASTRUCTURE.md](./PRODUCTION_INFRASTRUCTURE.md) |
 
 ### 5.0g Admin Tables & Areas (July 2026)
 
@@ -728,12 +740,14 @@ From roadmap and requirements — **priority order for next work:**
 
 ---
 
-## 13. Git & CI
+## 13. Git & deploy
 
 - **Branch:** `main`
 - **Remote:** `origin` → `https://github.com/adhuhaam/BlurayPOS.git`
-- **CI:** `.github/workflows/ci.yml` — backend build+test, frontend build on push/PR
-- **Latest major commit:** `13b5342` — SaaS platform, RBAC, catalog workflows
+- **Android APK archive:** `docs/apk releases/` — signed production builds committed for distribution
+- **CI/CD:** GitHub Actions **disabled** (July 2026) — workflows removed; no auto-deploy on push
+- **Production deploy:** `bash scripts/push-to-droplet.sh` from dev machine (SSH rsync + `deploy-production.sh` on droplet)
+- **Latest major commit:** Android v0.7.0 production release + build fixes
 
 ---
 
@@ -751,7 +765,7 @@ From roadmap and requirements — **priority order for next work:**
 | Database | PostgreSQL (private, port 5432) |
 | Cache / jobs | Redis (private, port 6379) |
 | TLS | Let's Encrypt + Certbot, mandatory HTTPS |
-| CI/CD | GitHub → manual deploy now; GitHub Actions later |
+| CI/CD | Manual `push-to-droplet.sh` (GitHub Actions removed July 2026) |
 | DNS | DigitalOcean DNS (nameservers at Namecheap) |
 
 ### Domain (`bluraymaldives.site`)
@@ -827,6 +841,7 @@ See full checklist in [deployment.md](./deployment.md) — HTTPS, DNS, health, D
 | [TERMINAL_APP.md](./TERMINAL_APP.md) | Android dev setup |
 | [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md) | **Repo map** — backend, frontends, Android, ports |
 | [DEV_ENVIRONMENT.md](./DEV_ENVIRONMENT.md) | **Local dev** — Docker, ports 5147/5173–5175, scripts |
+| [../docs/apk releases/README.md](../docs/apk%20releases/README.md) | **Android APK archive** — signed production releases |
 | [MARKETING_SITE.md](./MARKETING_SITE.md) | Public marketing homepage |
 | [README.md](../README.md) | Quick start |
 

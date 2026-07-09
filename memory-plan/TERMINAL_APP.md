@@ -69,7 +69,7 @@ User must be in `docker` group (`sudo usermod -aG docker $USER`) or log out/in a
 
 **Current version:** **0.7.0** (`versionCode` 15)
 
-## Restaurant table orders (v0.6.0)
+**Production APK archive:** `docs/apk releases/BlurayPOS-v0.7.0-release.apk` — build with `./scripts/build-android-release.sh apk`. See [../docs/apk releases/README.md](../docs/apk%20releases/README.md).
 
 Full spec: [TABLE_ORDERS.md](./TABLE_ORDERS.md)
 

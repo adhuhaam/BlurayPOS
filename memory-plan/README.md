@@ -35,6 +35,7 @@ When you change the plan:
 | [COUPON_SYSTEM.md](./COUPON_SYSTEM.md) | **Coupons & promotions** — LuckyQR-inspired plan, domain model, phases |
 | [OFFICE_MODULES.md](./OFFICE_MODULES.md) | **Office sidebar & plan modules** — subdomain links, plan flags, env vars |
 | [DEV_ENVIRONMENT.md](./DEV_ENVIRONMENT.md) | **Local dev** — ports, Docker, scripts, keep stack running |
+| [../docs/apk releases/README.md](../docs/apk%20releases/README.md) | **Android APK archive** — signed production releases |
 | [master-plan.md](./master-plan.md) | Extended requirements archive |
 
 ## Read order (new machine or agent)

@@ -160,7 +160,9 @@ Always show: Online / Offline / Syncing / Sync Error + pending transaction count
 
 Production API base URL: `https://api.bluraymaldives.site` (see [deployment.md](./deployment.md)).
 
-**Preview APK (field test):** `./scripts/build-android-preview.sh` → `terminal_app/dist/BlurayPOS-v*-preview.apk` — production API, debug signing for sideload. See [TERMINAL_APP.md](./TERMINAL_APP.md).
+**Preview APK (field test):** `./scripts/build-android-preview.sh` → `terminal_app/dist/BlurayPOS-v*-preview.apk` — production API, debug signing for sideload.
+
+**Release APK (production):** `./scripts/build-android-release.sh apk` → archived in `docs/apk releases/`. See [TERMINAL_APP.md](./TERMINAL_APP.md) and [../docs/apk releases/README.md](../docs/apk%20releases/README.md).
 
 ---
 

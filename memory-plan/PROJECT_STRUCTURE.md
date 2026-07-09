@@ -17,7 +17,7 @@
 | **Web** | React 19, Vite, TypeScript, npm workspaces | `frontend/` |
 | **Android** | Kotlin, Jetpack Compose, Retrofit | `terminal_app/` |
 | **Docs** | Living memory & specs | `memory-plan/` |
-| **Dev ops** | Docker Compose, shell scripts, GitHub Actions | `scripts/`, `.github/` |
+| **Dev ops** | Docker Compose, shell scripts, manual deploy | `scripts/`, `docs/apk releases/` |
 
 ---
 

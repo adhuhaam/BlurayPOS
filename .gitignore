@@ -41,6 +41,7 @@ terminal_app/keystore.properties
 terminal_app/*.jks
 terminal_app/*.keystore
 *.apk
+!docs/apk releases/*.apk
 *.aab
 
 # Cursor / local

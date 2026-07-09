@@ -9,7 +9,7 @@ KEYSTORE_PROPS="$APP_DIR/keystore.properties"
 
 export JAVA_HOME="${JAVA_HOME:-/snap/android-studio/current/jbr}"
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
-export GRADLE_OPTS="${GRADLE_OPTS:--Xmx1024m -XX:MaxMetaspaceSize=384m -Dfile.encoding=UTF-8}"
+export GRADLE_OPTS="${GRADLE_OPTS:--Xmx2048m -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8}"
 
 if [ ! -f "$KEYSTORE_PROPS" ]; then
   echo "ERROR: Missing $KEYSTORE_PROPS" >&2
@@ -20,6 +20,8 @@ fi
 
 VERSION="$(grep 'versionName' "$APP_DIR/app/build.gradle.kts" | head -1 | sed 's/.*"\(.*\)".*/\1/')"
 FORMAT="${1:-apk}"
+shift $(( $# > 0 ? 1 : 0 )) || true
+GRADLE_EXTRA_ARGS=("$@")
 
 echo "==> Verifying production API..."
 if ! curl -sf --max-time 15 "https://api.bluraymaldives.site/health" >/dev/null; then
@@ -32,13 +34,17 @@ mkdir -p "$DIST_DIR"
 case "$FORMAT" in
   apk)
     echo "==> Building signed release APK..."
-    ./gradlew assembleRelease --no-daemon --max-workers=2 -x lint -x lintVitalRelease "$@"
+    ./gradlew assembleRelease --no-daemon --max-workers=2 -x lint -x lintVitalRelease \
+      -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8" \
+      "${GRADLE_EXTRA_ARGS[@]}"
     APK_SRC="$APP_DIR/app/build/outputs/apk/release/app-release.apk"
     OUT_PATH="$DIST_DIR/BlurayPOS-v${VERSION}-release.apk"
   ;;
   aab|bundle)
     echo "==> Building signed release AAB (Play Store)..."
-    ./gradlew bundleRelease --no-daemon --max-workers=2 -x lint -x lintVitalRelease "$@"
+    ./gradlew bundleRelease --no-daemon --max-workers=2 -x lint -x lintVitalRelease \
+      -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8" \
+      "${GRADLE_EXTRA_ARGS[@]}"
     APK_SRC="$APP_DIR/app/build/outputs/bundle/release/app-release.aab"
     OUT_PATH="$DIST_DIR/BlurayPOS-v${VERSION}-release.aab"
   ;;

@@ -292,7 +292,7 @@ Payments (cash, transfer, etc.) are handled in **POS software** — not marketed
 
 1. **API rebuild** after backend changes: `docker build -t bluraypos-api:latest . && ./scripts/ensure-dev-api.sh --rebuild`
 2. **Empty customers section** — API unreachable or wrong proxy port; check `.dev-api-port` (5147 or 5148)
-3. **GitHub Actions deploy** — secrets may not be configured; use `push-to-droplet.sh` manually
+3. **Deploy** — `bash scripts/push-to-droplet.sh` (manual; GitHub Actions removed July 2026)
 4. **Multiple Docker API containers** — run `./scripts/cleanup-stale-docker-api.sh`; see [DEV_ENVIRONMENT.md](./DEV_ENVIRONMENT.md)
 5. **Production plans** — ensured by `BootstrapPlansAsync` on startup; full demo seed only in Development
 6. **Demo stores** — included in public marketing API (no longer excluded)

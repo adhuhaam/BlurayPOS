@@ -155,7 +155,7 @@ Spec: [deployment.md](./deployment.md)
 | 77 | PostgreSQL backups | 🔲 | Daily / weekly / monthly retention |
 | 78 | Health endpoints | 🟡 | `/health` exists; `/ready`, `/live` planned |
 | 79 | SSL + uptime monitoring | 🔲 | Cert expiry, DO uptime checks |
-| 80 | GitHub Actions deploy | 🔲 | Manual git pull today |
+| 80 | GitHub Actions deploy | 🟡 | Workflows removed July 2026; manual `push-to-droplet.sh` |
 | 81 | Docker production phase | 🔲 | Future; dev uses Docker Compose |
 | 82 | Production checklist | 🔲 | Pre-deploy verification in deployment.md |
 | 83 | Subdomains live | 🔲 | office, api, auth, cdn, status |
@@ -175,7 +175,7 @@ Spec: [MARKETING_SITE.md](./MARKETING_SITE.md)
 | 88 | Onboarding + plans split sections | 🟢 | `#get-started`, `#plans` |
 | 89 | Terminal copy (print, not payments) | 🟢 | No NFC/payment hardware claims |
 | 90 | Production landing deploy | 🟡 | `deploy-production.sh`; manual push works |
-| 91 | Marketing CI / auto-deploy | 🔲 | GitHub Actions secrets TBD |
+| 91 | Marketing CI / auto-deploy | 🟡 | Manual deploy; GitHub Actions removed |
 
 ---
 

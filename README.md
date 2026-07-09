@@ -28,7 +28,7 @@ Repository: [github.com/adhuhaam/BlurayPOS](https://github.com/adhuhaam/BlurayPO
 |-------|--------|
 | Backend | ASP.NET Core 9, EF Core, PostgreSQL, MediatR (CQRS), JWT + Identity |
 | Frontend | React 19, Vite, npm workspaces, Tailwind / shadcn (admin) |
-| DevOps | Docker, GitHub Actions CI, integration tests |
+| DevOps | Docker, manual deploy (`push-to-droplet.sh`), integration tests |
 
 ---
 
@@ -257,7 +257,7 @@ BlurayPOS/
 │   └── …
 ├── docker-compose.yml
 ├── Dockerfile
-└── .github/workflows/ci.yml
+└── docs/apk releases/     # Signed production APK archive
 ```
 
 ---
@@ -268,7 +268,7 @@ BlurayPOS/
 docker compose up --build
 ```
 
-See [memory-plan/PRODUCTION_INFRASTRUCTURE.md](memory-plan/PRODUCTION_INFRASTRUCTURE.md) for the canonical DigitalOcean production plan (systemd API, nginx, PostgreSQL, Redis, Let's Encrypt, CI/CD, `bluraymaldives.site`).
+See [memory-plan/PRODUCTION_INFRASTRUCTURE.md](memory-plan/PRODUCTION_INFRASTRUCTURE.md) for the canonical DigitalOcean production plan (systemd API, nginx, PostgreSQL, Redis, Let's Encrypt, manual deploy, `bluraymaldives.site`).
 
 ---
 

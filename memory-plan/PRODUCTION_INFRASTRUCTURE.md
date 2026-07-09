@@ -14,7 +14,7 @@ Canonical production deployment plan for DigitalOcean.
 | Database | PostgreSQL 17 (Docker, localhost only) |
 | Cache | Redis 7 (Docker, localhost only) |
 | SSL | Let's Encrypt + Certbot |
-| CI/CD | GitHub Actions |
+| CI/CD | Manual deploy (`scripts/push-to-droplet.sh`) |
 | DNS | DigitalOcean |
 
 Docker is used for **infrastructure only** (PostgreSQL, Redis). The API runs as a **systemd service**. Full containerization of the API is a future phase.
@@ -121,13 +121,11 @@ Only Nginx exposes public HTTP/HTTPS traffic.
 ## Deployment Flow
 
 ```
-GitHub (push to main)
+Local dev machine
   ↓
-GitHub Actions (build + test)
+bash scripts/push-to-droplet.sh (rsync + SSH)
   ↓
-rsync to DigitalOcean droplet
-  ↓
-git pull (on server)
+git pull (on server, optional)
   ↓
 docker compose up (PostgreSQL + Redis)
   ↓
@@ -139,6 +137,8 @@ npm build → rsync static files
   ↓
 nginx reload
 ```
+
+**Note:** GitHub Actions workflows were removed (July 2026). Pushes to `main` no longer auto-deploy or run CI. Build and verify locally before `push-to-droplet.sh`.
 
 ### Manual deploy
 
@@ -244,15 +244,15 @@ Verifies: HTTPS, redirects, SSL, DNS, API health/ready/live, office/POS apps, Po
 
 ---
 
-## GitHub Actions Secrets
+## Android APK distribution
 
-Configure in GitHub → Settings → Secrets:
+Signed production APKs are archived in the repo:
 
-| Secret | Value |
-|--------|-------|
-| `DROPLET_SSH_KEY` | Private SSH key for root@droplet |
-| `DROPLET_HOST` | `161.35.5.82` |
-| `DROPLET_USER` | `root` |
+```
+docs/apk releases/BlurayPOS-v0.7.0-release.apk
+```
+
+Build locally with `./scripts/build-android-release.sh apk`. See [../docs/apk releases/README.md](../docs/apk%20releases/README.md).
 
 ---
 

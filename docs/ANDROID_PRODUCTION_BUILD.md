@@ -86,7 +86,12 @@ Back up `bluraypos-release.jks` securely. You need the same key for every Play S
 ```bash
 ./scripts/build-android-release.sh apk
 # → terminal_app/dist/BlurayPOS-v0.7.0-release.apk
+# Archive copy (committed to git):
+cp terminal_app/dist/BlurayPOS-v0.7.0-release.apk "docs/apk releases/"
+adb push terminal_app/dist/BlurayPOS-v0.7.0-release.apk /sdcard/Download/
 ```
+
+See [apk releases/README.md](./apk%20releases/README.md) for the release archive.
 
 **Play Store AAB**:
 
@@ -123,8 +128,15 @@ See [memory-plan/DEV_ENVIRONMENT.md](../memory-plan/DEV_ENVIRONMENT.md).
 
 ---
 
+## 9. GitHub Actions
+
+**Removed (July 2026).** `.github/workflows/ci.yml` and `deploy.yml` triggered failed pipeline emails without configured droplet secrets. Use local builds + `scripts/push-to-droplet.sh` for production deploy.
+
+---
+
 ## Related docs
 
+- [apk releases/README.md](./apk%20releases/README.md) — archived APKs in git
 - [terminal_app/README.md](../terminal_app/README.md) — app features & hardware
 - [memory-plan/TERMINAL_APP.md](../memory-plan/TERMINAL_APP.md) — living manual
 - [memory-plan/ANDROID_MASTER_PLAN.md](../memory-plan/ANDROID_MASTER_PLAN.md) — product roadmap
