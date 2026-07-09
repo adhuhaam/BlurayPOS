@@ -50,19 +50,25 @@ dotnet publish backend/src/Pos.Api/Pos.Api.csproj \
 chown -R www-data:www-data "$PUBLISH_DIR"
 
 echo "==> Building frontend (frontend/env/.env.production)..."
-bash "$REPO_ROOT/scripts/build-frontend-production.sh"
-bash "$REPO_ROOT/scripts/verify-frontend-production-build.sh"
+if [ "${BUILD_FRONTEND_LOCALLY:-}" = "1" ] || [ "${SKIP_SERVER_NPM:-}" = "1" ]; then
+  echo "    Skipping server npm — dist must be synced separately (low-RAM droplet)."
+else
+  bash "$REPO_ROOT/scripts/build-frontend-production.sh"
+  bash "$REPO_ROOT/scripts/verify-frontend-production-build.sh"
+fi
 
-echo "==> Publishing static files..."
-FRONTEND="$REPO_ROOT/frontend"
-rsync -a --delete "$FRONTEND/apps/marketing-site/dist/" /var/www/bluraypos/landing/
-rsync -a --delete "$FRONTEND/apps/admin-portal/dist/" /var/www/bluraypos/office/
-rsync -a --delete "$FRONTEND/apps/pos-terminal/dist/" /var/www/bluraypos/pos/
-mkdir -p /var/www/bluraypos/menu /var/www/bluraypos/order /var/www/bluraypos/coupons
-rsync -a --delete "$FRONTEND/apps/online-menu/dist/" /var/www/bluraypos/menu/
-rsync -a --delete "$FRONTEND/apps/online-order/dist/" /var/www/bluraypos/order/
-rsync -a --delete "$FRONTEND/apps/coupons-site/dist/" /var/www/bluraypos/coupons/
-chown -R www-data:www-data /var/www/bluraypos
+if [ "${SKIP_STATIC_PUBLISH:-}" != "1" ]; then
+  echo "==> Publishing static files..."
+  FRONTEND="$REPO_ROOT/frontend"
+  rsync -a --delete "$FRONTEND/apps/marketing-site/dist/" /var/www/bluraypos/landing/
+  rsync -a --delete "$FRONTEND/apps/admin-portal/dist/" /var/www/bluraypos/office/
+  rsync -a --delete "$FRONTEND/apps/pos-terminal/dist/" /var/www/bluraypos/pos/
+  mkdir -p /var/www/bluraypos/menu /var/www/bluraypos/order /var/www/bluraypos/coupons
+  rsync -a --delete "$FRONTEND/apps/online-menu/dist/" /var/www/bluraypos/menu/
+  rsync -a --delete "$FRONTEND/apps/online-order/dist/" /var/www/bluraypos/order/
+  rsync -a --delete "$FRONTEND/apps/coupons-site/dist/" /var/www/bluraypos/coupons/
+  chown -R www-data:www-data /var/www/bluraypos
+fi
 
 echo "==> Restarting API service..."
 systemctl daemon-reload
