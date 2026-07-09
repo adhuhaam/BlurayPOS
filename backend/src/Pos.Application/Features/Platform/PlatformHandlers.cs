@@ -19,6 +19,7 @@ public record ListPlatformPlansQuery : IRequest<IList<PlanAdminDto>>;
 public record CreatePlatformPlanCommand(UpsertPlanRequest Request) : IRequest<PlanAdminDto>;
 public record UpdatePlatformPlanCommand(Guid PlanId, UpsertPlanRequest Request) : IRequest<PlanAdminDto>;
 public record DeactivatePlatformPlanCommand(Guid PlanId) : IRequest;
+public record GetPlatformReportsQuery : IRequest<PlatformReportsDto>;
 public record ListPlatformUsersQuery(Guid? OrganizationId, string? Search) : IRequest<IList<PlatformUserListItemDto>>;
 public record UpdatePlatformUserCommand(Guid UserId, UpdatePlatformUserRequest Request) : IRequest<PlatformUserListItemDto>;
 
@@ -110,6 +111,12 @@ public class DeactivatePlatformPlanCommandHandler(IPlatformService platformServi
 {
     public Task Handle(DeactivatePlatformPlanCommand command, CancellationToken cancellationToken) =>
         platformService.DeactivatePlanAsync(command.PlanId, cancellationToken);
+}
+
+public class GetPlatformReportsQueryHandler(IPlatformService platformService) : IRequestHandler<GetPlatformReportsQuery, PlatformReportsDto>
+{
+    public Task<PlatformReportsDto> Handle(GetPlatformReportsQuery request, CancellationToken cancellationToken) =>
+        platformService.GetPlatformReportsAsync(cancellationToken);
 }
 
 public class ListPlatformUsersQueryHandler(IPlatformService platformService) : IRequestHandler<ListPlatformUsersQuery, IList<PlatformUserListItemDto>>

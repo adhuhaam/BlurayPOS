@@ -5,6 +5,7 @@ import { PlatformSidebar } from '@/components/platform-sidebar';
 import { TenantSidebar } from '@/components/tenant-sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAuth } from '@/auth';
+import { SubscriptionReadOnlyBanner } from '@/components/SubscriptionReadOnlyBanner';
 
 export function AdminLayout() {
   const { isSuperAdmin } = useAuth();
@@ -22,6 +23,7 @@ export function AdminLayout() {
             </span>
           </header>
           <main className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+            {!isSuperAdmin && <SubscriptionReadOnlyBanner />}
             <Outlet />
           </main>
         </SidebarInset>

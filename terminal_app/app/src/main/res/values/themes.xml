@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.BlurayPOSTerminal" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/brand_navy</item>
+        <item name="android:navigationBarColor">@color/brand_navy</item>
+        <item name="android:windowBackground">@color/brand_navy</item>
+    </style>
+</resources>

@@ -9,13 +9,10 @@ const PERMISSIONS_KEY = 'pos_permissions';
 const STORE_ID_KEY = 'pos_store_id';
 
 export function getApiBaseUrl(): string {
-  try {
-    const meta = import.meta as { env?: { VITE_API_URL?: string } };
-    if (meta.env?.VITE_API_URL) return meta.env.VITE_API_URL;
-  } catch {
-    // not in a Vite environment
-  }
-  return 'http://localhost:5142';
+  const configured = import.meta.env.VITE_API_URL?.trim();
+  if (configured) return configured;
+  // Dev: empty → same-origin /api via Vite proxy. Prod: set VITE_API_URL in frontend/env/.env.production
+  return '';
 }
 
 export function getAccessToken(): string | null {
@@ -106,7 +103,10 @@ type RequestOptions = {
 
 function buildUrl(path: string, params?: RequestOptions['params']): string {
   const base = getApiBaseUrl().replace(/\/$/, '');
-  const url = new URL(`${base}${path.startsWith('/') ? path : `/${path}`}`);
+  const pathStr = path.startsWith('/') ? path : `/${path}`;
+  const url = base
+    ? new URL(`${base}${pathStr}`)
+    : new URL(pathStr, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
   if (params) {
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== null && value !== '') {
@@ -182,4 +182,20 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
 
   return json.data as T;
+}
+
+/** Download a file from an authenticated endpoint (non-JSON response). */
+export async function downloadAuthenticated(path: string, filename: string): Promise<void> {
+  const token = getAccessToken();
+  const response = await fetch(buildUrl(path), {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!response.ok) throw new ApiError(`Download failed (${response.status})`, response.status);
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }

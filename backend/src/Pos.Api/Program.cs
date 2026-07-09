@@ -1,6 +1,9 @@
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Pos.Infrastructure.Hubs;
@@ -85,6 +88,14 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var redisConnection = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+
+builder.Services.AddHealthChecks()
+    .AddNpgSql(connectionString, name: "postgresql", tags: ["ready", "db"])
+    .AddRedis(redisConnection, name: "redis", tags: ["ready", "redis"]);
+
 builder.Services.AddCors(options =>
 {
             options.AddPolicy("PosClients", policy =>
@@ -100,8 +111,9 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    await DataSeeder.SeedAsync(app.Services);
 }
+
+await DataSeeder.SeedAsync(app.Services);
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 if (!app.Environment.IsDevelopment())
@@ -109,11 +121,41 @@ if (!app.Environment.IsDevelopment())
 app.UseCors("PosClients");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<SubscriptionEnforcementMiddleware>();
 app.UseMiddleware<IdempotencyMiddleware>();
 app.MapControllers();
 app.MapHub<PosHub>("/hubs/pos");
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+
+app.MapGet("/live", () => Results.Ok(new { status = "alive", timestamp = DateTime.UtcNow }));
+
+app.MapHealthChecks("/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+    ResponseWriter = WriteHealthResponse,
+});
+
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = WriteHealthResponse,
+});
 
 app.Run();
+
+static Task WriteHealthResponse(HttpContext context, HealthReport report)
+{
+    context.Response.ContentType = "application/json";
+    var payload = new
+    {
+        status = report.Status == HealthStatus.Healthy ? "healthy" : "unhealthy",
+        timestamp = DateTime.UtcNow,
+        checks = report.Entries.ToDictionary(
+            e => e.Key,
+            e => new { status = e.Value.Status.ToString(), duration = e.Value.Duration.TotalMilliseconds })
+    };
+    context.Response.StatusCode = report.Status == HealthStatus.Healthy
+        ? StatusCodes.Status200OK
+        : StatusCodes.Status503ServiceUnavailable;
+    return context.Response.WriteAsync(JsonSerializer.Serialize(payload));
+}
 
 public partial class Program;

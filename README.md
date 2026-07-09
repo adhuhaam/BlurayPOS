@@ -13,6 +13,7 @@ Repository: [github.com/adhuhaam/BlurayPOS](https://github.com/adhuhaam/BlurayPO
 | **SaaS platform** | Plans & subscriptions, SuperAdmin tenant provisioning, org billing, usage limits |
 | **Multi-tenant** | Organizations, stores, terminals, RBAC with per-store role permissions |
 | **POS terminal** | Product grid, cart, cash/card/bank checkout, open orders, receipts, barcode scan, offline sync (PWA) |
+| **Restaurant** | Table assignment, send-to-kitchen, request bill, table status (API + Android v0.6.0) |
 | **Admin portal** | Dashboard, catalog workflow (products → recipes → inventory), orders, supplies, users & access, billing |
 | **Inventory** | Finished-goods stock per store, adjustments, inter-store transfers |
 | **Supplies & recipes** | Ingredient catalog (units: kg, ml, piece), supply receiving, BOM/recipes, auto-deduct on sale |
@@ -39,21 +40,25 @@ Repository: [github.com/adhuhaam/BlurayPOS](https://github.com/adhuhaam/BlurayPO
 
 ---
 
-## Quick Start
+## Quick Start (Docker — recommended)
 
-### 1. Database
-
-```sql
-CREATE DATABASE pos_dev;
+```bash
+./scripts/dev-all.sh
 ```
 
-Default connection (`backend/src/Pos.Api/appsettings.Development.json`):
+See **[memory-plan/DEV_ENVIRONMENT.md](memory-plan/DEV_ENVIRONMENT.md)** for full ports, scripts, and troubleshooting.
 
-```
-Host=localhost;Port=5432;Database=pos_dev;Username=postgres;Password=postgres
-```
+| Service | URL |
+|---------|-----|
+| API | http://localhost:5147 *(or port in `.dev-api-port`)* |
+| Swagger | http://localhost:5147/swagger |
+| POS | http://localhost:5173 |
+| Admin | http://localhost:5174 |
+| Marketing | http://localhost:5175 |
 
-### 2. Backend
+**Android (USB device):** `./scripts/install-android.sh` — API URL uses LAN IP + `.dev-api-port`.
+
+### Alternative: dotnet run (no Docker API)
 
 ```powershell
 cd backend/src/Pos.Api
@@ -62,32 +67,7 @@ dotnet ef database update --project ../Pos.Infrastructure
 dotnet run
 ```
 
-- API: **http://localhost:5142**
-- Swagger: **http://localhost:5142/swagger** (development)
-- Health: **http://localhost:5142/health**
-
-Migrations and demo seed run automatically on first start in Development.
-
-### 3. Frontend
-
-```powershell
-cd frontend
-npm install
-npm run dev
-```
-
-| App | URL | Port |
-|-----|-----|------|
-| POS Terminal | http://localhost:5173 | 5173 |
-| Admin Portal | http://localhost:5174 | 5174 |
-
-### Environment
-
-```env
-VITE_API_URL=http://localhost:5142
-```
-
-Set in `frontend/apps/pos-terminal/.env` and `frontend/apps/admin-portal/.env` if needed.
+- API: **http://localhost:5142** (Kestrel default when not using Docker)
 
 ---
 
@@ -145,16 +125,23 @@ Public: `/register` — self-service store signup
 - **SuperAdmin**: tenant CRUD, suspend/activate, plan change, password reset, payment verification
 - **Billing UI**: `/billing` — usage bars, plan switch, submit bank/cash payment proof
 
-### Product documentation
+### Memory & plan
+
+See [memory-plan/README.md](memory-plan/README.md) for the full index.
 
 | Doc | Purpose |
 |-----|---------|
-| [docs/DEVELOPMENT_HANDOFF.md](docs/DEVELOPMENT_HANDOFF.md) | **Full project memory — read when moving machines or starting new Cursor sessions** |
-| [docs/master-plan.md](docs/master-plan.md) | Extended master plan & requirements |
-| [docs/SAAS_REQUIREMENTS.md](docs/SAAS_REQUIREMENTS.md) | Canonical SaaS architecture spec |
-| [docs/TERMINOLOGY.md](docs/TERMINOLOGY.md) | Product ↔ code naming |
-| [docs/DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md) | Phased delivery status |
-| [docs/GST_MALDIVES.md](docs/GST_MALDIVES.md) | Maldives GST / MIRA accounting module |
+| [memory-plan/DEVELOPMENT_HANDOFF.md](memory-plan/DEVELOPMENT_HANDOFF.md) | **Full project memory — read when moving machines or starting new Cursor sessions** |
+| [memory-plan/PROJECT_STRUCTURE.md](memory-plan/PROJECT_STRUCTURE.md) | **Repo map** — backend, frontends, Android, ports |
+| [memory-plan/DEV_ENVIRONMENT.md](memory-plan/DEV_ENVIRONMENT.md) | **Local dev** — Docker, ports, scripts, keep stack running |
+| [memory-plan/SAAS_REQUIREMENTS.md](memory-plan/SAAS_REQUIREMENTS.md) | Canonical SaaS architecture spec |
+| [memory-plan/DEVELOPMENT_ROADMAP.md](memory-plan/DEVELOPMENT_ROADMAP.md) | Phased delivery status |
+| [memory-plan/TERMINOLOGY.md](memory-plan/TERMINOLOGY.md) | Product ↔ code naming |
+| [memory-plan/PRODUCTION_INFRASTRUCTURE.md](memory-plan/PRODUCTION_INFRASTRUCTURE.md) | DigitalOcean production hosting |
+| [memory-plan/ANDROID_MASTER_PLAN.md](memory-plan/ANDROID_MASTER_PLAN.md) | Native Android spec |
+| [memory-plan/TABLE_ORDERS.md](memory-plan/TABLE_ORDERS.md) | Restaurant table orders (v0.6.0) |
+| [memory-plan/INDUSTRY_MODES.md](memory-plan/INDUSTRY_MODES.md) | Restaurant / Retail / Hybrid modes |
+| [memory-plan/GST_MALDIVES.md](memory-plan/GST_MALDIVES.md) | Maldives GST / MIRA accounting module |
 
 ---
 
@@ -232,7 +219,7 @@ API: `POST /api/storage/upload` · `GET /api/storage/files/{fileName}`
 | Storage | `/api/storage` | Slip uploads |
 | SignalR | `/hubs/pos` | Live inventory & orders |
 
-Full details: [docs/architecture.md](docs/architecture.md)
+Full details: [memory-plan/architecture.md](memory-plan/architecture.md)
 
 ---
 
@@ -250,19 +237,24 @@ BlurayPOS/
 ├── frontend/
 │   ├── apps/
 │   │   ├── pos-terminal/         # Cashier PWA
-│   │   └── admin-portal/         # SaaS admin (shadcn/ui)
+│   │   ├── admin-portal/         # SaaS admin (shadcn/ui)
+│   │   └── marketing-site/       # Public homepage (bluraymaldives.site)
 │   └── packages/
 │       ├── api-client/
 │       ├── offline-sync/
 │       └── ui/
-├── docs/
-│   ├── DEVELOPMENT_HANDOFF.md  # Full context for laptop move / Cursor sessions
-│   ├── SAAS_REQUIREMENTS.md      # Canonical product spec
-│   ├── TERMINOLOGY.md
+├── terminal_app/                 # Native Android POS (Kotlin + Compose)
+├── memory-plan/                  # Living memory & plans (update with every major change)
+│   ├── README.md                 # Index — start here for Cursor
+│   ├── PROJECT_STRUCTURE.md      # Repo map & stack
+│   ├── DEVELOPMENT_HANDOFF.md
+│   ├── DEV_ENVIRONMENT.md
+│   ├── SAAS_REQUIREMENTS.md
 │   ├── DEVELOPMENT_ROADMAP.md
-│   ├── GST_MALDIVES.md
-│   ├── architecture.md
-│   └── deployment.md
+│   ├── INDUSTRY_MODES.md
+│   ├── PRODUCTION_INFRASTRUCTURE.md
+│   ├── ANDROID_MASTER_PLAN.md
+│   └── …
 ├── docker-compose.yml
 ├── Dockerfile
 └── .github/workflows/ci.yml
@@ -276,7 +268,7 @@ BlurayPOS/
 docker compose up --build
 ```
 
-See [docs/deployment.md](docs/deployment.md) for production deployment.
+See [memory-plan/PRODUCTION_INFRASTRUCTURE.md](memory-plan/PRODUCTION_INFRASTRUCTURE.md) for the canonical DigitalOcean production plan (systemd API, nginx, PostgreSQL, Redis, Let's Encrypt, CI/CD, `bluraymaldives.site`).
 
 ---
 

@@ -1,4 +1,4 @@
-import { request, setAuthTokens, setStoredUser, setStoredStores, setStoredRoles, setStoredPermissions, getRefreshToken, getSelectedStoreId, getAccessToken, getApiBaseUrl } from './client.js';
+import { request, downloadAuthenticated, setAuthTokens, setStoredUser, setStoredStores, setStoredRoles, setStoredPermissions, getRefreshToken, getSelectedStoreId, getAccessToken, getApiBaseUrl } from './client.js';
 import type {
   LoginRequest,
   LoginResponse,
@@ -50,6 +50,7 @@ import type {
   UploadResponse,
   MeResponse,
   PlanDto,
+  PublicMarketingDto,
   PlanAdminDto,
   UpsertPlanRequest,
   SubscriptionDto,
@@ -62,14 +63,67 @@ import type {
   CheckoutResponse,
   SubmitSubscriptionPaymentRequest,
   SubscriptionPaymentDto,
+  SubscriptionBillingInfoDto,
+  PlatformReportsDto,
   PlatformSettingsDto,
   UpdatePlatformSettingsRequest,
   CustomerDto,
   CreateCustomerRequest,
+  CouponDashboardDto,
+  CouponCampaignDto,
+  CouponCampaignDetailDto,
+  CreateCouponCampaignRequest,
+  UpdateCouponCampaignRequest,
+  CouponBatchDto,
+  CreateCouponBatchRequest,
+  CouponBatchPrintDto,
+  CouponEntryDto,
+  PublicCouponScanDto,
+  PublicCouponEnterRequest,
+  PublicCouponEnterResponse,
+  CouponCodeDto,
+  CampaignWinnerDto,
+  AssignCampaignWinnerRequest,
+  HrDashboardDto,
+  EmployeeDto,
+  EmployeeListItemDto,
+  CreateEmployeeRequest,
+  UpdateEmployeeRequest,
+  EmployeeCompensationDto,
+  UpsertEmployeeCompensationRequest,
+  PayrollAdjustmentDto,
+  UpsertPayrollAdjustmentRequest,
+  PayrollRunDto,
+  CreatePayrollRunRequest,
+  PaySlipDto,
+  AttendanceRecordDto,
+  ClockInRequest,
+  ClockOutRequest,
+  ManualAttendanceRequest,
+  LeaveTypeDto,
+  UpsertLeaveTypeRequest,
+  LeaveBalanceDto,
+  LeaveRequestDto,
+  CreateLeaveRequestRequest,
+  WorkScheduleDto,
+  UpsertWorkScheduleItemRequest,
+  PerformanceReviewDto,
+  CreatePerformanceReviewRequest,
+  DiningAreaDto,
+  CreateDiningAreaRequest,
+  DiningTableDto,
+  CreateDiningTableRequest,
+  PublicStoreProfileDto,
+  PublicMenuCategoryDto,
+  PublicTableDto,
+  PublicPlaceOrderRequest,
+  PublicPlaceOrderResponse,
+  PublicOrderTrackDto,
 } from './types.js';
 
 export * from './types.js';
 export * from './client.js';
+export * from './tenant-features.js';
 
 export const api = {
   // Auth
@@ -160,7 +214,7 @@ export const api = {
     request<StockTransferDto>(`/api/inventory/transfers/${id}/complete`, { method: 'POST' }),
 
   // Orders
-  getOrders: (params: { storeId: string; status?: OrderStatus; page?: number; pageSize?: number }) =>
+  getOrders: (params: { storeId: string; status?: OrderStatus; orderSource?: string; page?: number; pageSize?: number }) =>
     request<PagedResult<OrderDto>>('/api/orders', { params }),
 
   getOrder: (id: string) => request<OrderDto>(`/api/orders/${id}`),
@@ -176,6 +230,53 @@ export const api = {
 
   voidOrder: (id: string) =>
     request<OrderDto>(`/api/orders/${id}/void`, { method: 'POST' }),
+
+  acceptOnlineOrder: (id: string) =>
+    request<OrderDto>(`/api/orders/${id}/accept`, { method: 'POST' }),
+
+  verifyOnlinePayment: (id: string) =>
+    request<OrderDto>(`/api/orders/${id}/verify-payment`, { method: 'POST' }),
+
+  rejectOnlineOrder: (id: string, reason: string) =>
+    request<OrderDto>(`/api/orders/${id}/reject`, { method: 'POST', body: { reason } }),
+
+  // Dining tables & areas
+  getDiningAreas: (storeId: string) =>
+    request<DiningAreaDto[]>('/api/dining-areas', { params: { storeId } }),
+
+  createDiningArea: (storeId: string, data: CreateDiningAreaRequest) =>
+    request<DiningAreaDto>('/api/dining-areas', { method: 'POST', body: data, params: { storeId } }),
+
+  getDiningTables: (storeId: string) =>
+    request<DiningTableDto[]>('/api/tables', { params: { storeId } }),
+
+  createDiningTable: (storeId: string, data: CreateDiningTableRequest) =>
+    request<DiningTableDto>('/api/tables', { method: 'POST', body: data, params: { storeId } }),
+
+  // Public online ordering
+  getPublicStore: (slug: string) =>
+    request<PublicStoreProfileDto>(`/api/public/stores/${slug}`, { auth: false }),
+
+  getPublicMenu: (slug: string, storeId?: string) =>
+    request<PublicMenuCategoryDto[]>(`/api/public/stores/${slug}/menu`, { auth: false, params: storeId ? { storeId } : undefined }),
+
+  getPublicTable: (qrToken: string) =>
+    request<PublicTableDto>(`/api/public/tables/${qrToken}`, { auth: false }),
+
+  placePublicOrder: (slug: string, data: PublicPlaceOrderRequest) =>
+    request<PublicPlaceOrderResponse>(`/api/public/stores/${slug}/orders`, { method: 'POST', body: data, auth: false }),
+
+  trackPublicOrder: (token: string) =>
+    request<PublicOrderTrackDto>(`/api/public/orders/track/${token}`, { auth: false }),
+
+  uploadPublicFile: async (file: File): Promise<UploadResponse> => {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${getApiBaseUrl()}/api/storage/upload`, { method: 'POST', body: form });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error ?? 'Upload failed');
+    return json;
+  },
 
   // Shifts
   getCurrentShift: (storeId: string) =>
@@ -243,13 +344,15 @@ export const api = {
     request<PlanAdminDto>(`/api/platform/plans/${id}`, { method: 'PUT', body: data }),
   deactivatePlatformPlan: (id: string) =>
     request<object>(`/api/platform/plans/${id}`, { method: 'DELETE' }),
+  getPlatformReports: () => request<PlatformReportsDto>('/api/platform/reports'),
   getPlatformUsers: (params?: { organizationId?: string; search?: string }) =>
     request<PlatformUserListItemDto[]>('/api/platform/users', { params }),
   updatePlatformUser: (id: string, data: UpdatePlatformUserRequest) =>
     request<PlatformUserListItemDto>(`/api/platform/users/${id}`, { method: 'PUT', body: data }),
 
   // Plans & Billing
-  getPlans: () => request<PlanDto[]>('/api/plans'),
+  getPublicMarketing: () => request<PublicMarketingDto>('/api/public/marketing', { auth: false }),
+  getPlans: () => request<PlanDto[]>('/api/plans', { auth: false }),
   getSubscription: () => request<SubscriptionDto | null>('/api/subscription'),
   changePlan: (data: ChangePlanRequest) =>
     request<SubscriptionDto>('/api/subscription/plan', { method: 'PUT', body: data }),
@@ -257,6 +360,8 @@ export const api = {
     request<CheckoutResponse>('/api/subscription/checkout', { method: 'POST', body: data }),
   submitSubscriptionPayment: (data: SubmitSubscriptionPaymentRequest) =>
     request<SubscriptionPaymentDto>('/api/subscription/payments', { method: 'POST', body: data }),
+  getMySubscriptionPayments: () => request<SubscriptionPaymentDto[]>('/api/subscription/payments'),
+  getSubscriptionBillingInfo: () => request<SubscriptionBillingInfoDto>('/api/subscription/billing-info'),
 
   // Users
   getUsers: () => request<UserListItemDto[]>('/api/users'),
@@ -318,4 +423,110 @@ export const api = {
 
   createCustomer: (data: CreateCustomerRequest) =>
     request<CustomerDto>('/api/customers', { method: 'POST', body: data }),
+
+  // Coupons module
+  getCouponDashboard: () => request<CouponDashboardDto>('/api/coupons/dashboard'),
+  getCouponCampaigns: (page = 1, pageSize = 50) =>
+    request<PagedResult<CouponCampaignDto>>('/api/coupons/campaigns', { params: { page, pageSize } }),
+  getCouponCampaign: (id: string) => request<CouponCampaignDetailDto>(`/api/coupons/campaigns/${id}`),
+  createCouponCampaign: (data: CreateCouponCampaignRequest) =>
+    request<CouponCampaignDto>('/api/coupons/campaigns', { method: 'POST', body: data }),
+  updateCouponCampaign: (id: string, data: UpdateCouponCampaignRequest) =>
+    request<CouponCampaignDto>(`/api/coupons/campaigns/${id}`, { method: 'PUT', body: data }),
+  createCouponBatch: (campaignId: string, data: CreateCouponBatchRequest) =>
+    request<CouponBatchDto>(`/api/coupons/campaigns/${campaignId}/batches`, { method: 'POST', body: data }),
+  getCouponBatchPrint: (campaignId: string, batchId: string) =>
+    request<CouponBatchPrintDto>(`/api/coupons/campaigns/${campaignId}/batches/${batchId}/print`),
+  getCouponEntries: (campaignId: string, page = 1, pageSize = 50) =>
+    request<PagedResult<CouponEntryDto>>(`/api/coupons/campaigns/${campaignId}/entries`, { params: { page, pageSize } }),
+  getCouponCodes: (
+    campaignId: string,
+    params?: { batchId?: string; status?: string; search?: string; page?: number; pageSize?: number },
+  ) => request<PagedResult<CouponCodeDto>>(`/api/coupons/campaigns/${campaignId}/codes`, { params }),
+  voidCouponCode: (codeId: string) =>
+    request<CouponCodeDto>(`/api/coupons/codes/${codeId}/void`, { method: 'POST' }),
+  getCampaignWinners: (campaignId: string) =>
+    request<CampaignWinnerDto[]>(`/api/coupons/campaigns/${campaignId}/winners`),
+  assignCampaignWinner: (data: AssignCampaignWinnerRequest) =>
+    request<boolean>('/api/coupons/winners', { method: 'POST', body: data }),
+  exportCouponBatchCsv: (campaignId: string, batchId: string) =>
+    downloadAuthenticated(
+      `/api/coupons/campaigns/${campaignId}/batches/${batchId}/export`,
+      `coupon-batch-${batchId.slice(0, 8)}.csv`,
+    ),
+
+  // Public coupons (coupons-site)
+  getPublicCouponScan: (internalCode: string) =>
+    request<PublicCouponScanDto>(`/api/public/coupons/s/${encodeURIComponent(internalCode)}`, { auth: false }),
+  submitPublicCouponEntry: (internalCode: string, data: PublicCouponEnterRequest) =>
+    request<PublicCouponEnterResponse>(`/api/public/coupons/s/${encodeURIComponent(internalCode)}/enter`, {
+      method: 'POST',
+      body: data,
+      auth: false,
+    }),
+
+  // HR module
+  getHrDashboard: () => request<HrDashboardDto>('/api/hr/dashboard'),
+  getEmployees: (search?: string) => request<EmployeeListItemDto[]>('/api/hr/employees', { params: { search } }),
+  getEmployee: (id: string) => request<EmployeeDto>(`/api/hr/employees/${id}`),
+  createEmployee: (data: CreateEmployeeRequest) =>
+    request<EmployeeDto>('/api/hr/employees', { method: 'POST', body: data }),
+  updateEmployee: (id: string, data: UpdateEmployeeRequest) =>
+    request<EmployeeDto>(`/api/hr/employees/${id}`, { method: 'PUT', body: data }),
+  updateEmployeeDocument: (id: string, filePath: string) =>
+    request<EmployeeDto>(`/api/hr/employees/${id}/document`, { method: 'POST', body: { filePath } }),
+  getEmployeeCompensation: (employeeId: string) =>
+    request<EmployeeCompensationDto | null>(`/api/hr/employees/${employeeId}/compensation`),
+  upsertEmployeeCompensation: (employeeId: string, data: UpsertEmployeeCompensationRequest) =>
+    request<EmployeeCompensationDto>(`/api/hr/employees/${employeeId}/compensation`, { method: 'PUT', body: data }),
+  getEmployeeAdjustments: (employeeId: string) =>
+    request<PayrollAdjustmentDto[]>(`/api/hr/employees/${employeeId}/adjustments`),
+  createPayrollAdjustment: (employeeId: string, data: UpsertPayrollAdjustmentRequest) =>
+    request<PayrollAdjustmentDto>(`/api/hr/employees/${employeeId}/adjustments`, { method: 'POST', body: data }),
+  updatePayrollAdjustment: (employeeId: string, adjustmentId: string, data: UpsertPayrollAdjustmentRequest) =>
+    request<PayrollAdjustmentDto>(`/api/hr/employees/${employeeId}/adjustments/${adjustmentId}`, { method: 'PUT', body: data }),
+  deletePayrollAdjustment: (employeeId: string, adjustmentId: string) =>
+    request<boolean>(`/api/hr/employees/${employeeId}/adjustments/${adjustmentId}`, { method: 'DELETE' }),
+  getPayrollRuns: () => request<PayrollRunDto[]>('/api/hr/payroll-runs'),
+  createPayrollRun: (data: CreatePayrollRunRequest) =>
+    request<PayrollRunDto>('/api/hr/payroll-runs', { method: 'POST', body: data }),
+  generatePayrollRun: (id: string) =>
+    request<PayrollRunDto>(`/api/hr/payroll-runs/${id}/generate`, { method: 'POST' }),
+  finalizePayrollRun: (id: string) =>
+    request<PayrollRunDto>(`/api/hr/payroll-runs/${id}/finalize`, { method: 'POST' }),
+  getPayrollRunPaySlips: (id: string) =>
+    request<PaySlipDto[]>(`/api/hr/payroll-runs/${id}/payslips`),
+  getPaySlip: (id: string) => request<PaySlipDto>(`/api/hr/payslips/${id}`),
+  getEmployeePaySlips: (employeeId: string) =>
+    request<PaySlipDto[]>(`/api/hr/employees/${employeeId}/payslips`),
+  getAttendance: (params?: { employeeId?: string; from?: string; to?: string }) =>
+    request<AttendanceRecordDto[]>('/api/hr/attendance', { params }),
+  clockIn: (data: ClockInRequest) =>
+    request<AttendanceRecordDto>('/api/hr/attendance/clock-in', { method: 'POST', body: data }),
+  clockOut: (data: ClockOutRequest) =>
+    request<AttendanceRecordDto>('/api/hr/attendance/clock-out', { method: 'POST', body: data }),
+  manualAttendance: (data: ManualAttendanceRequest) =>
+    request<AttendanceRecordDto>('/api/hr/attendance/manual', { method: 'POST', body: data }),
+  getLeaveTypes: () => request<LeaveTypeDto[]>('/api/hr/leave-types'),
+  createLeaveType: (data: UpsertLeaveTypeRequest) =>
+    request<LeaveTypeDto>('/api/hr/leave-types', { method: 'POST', body: data }),
+  getLeaveRequests: (status?: string) =>
+    request<LeaveRequestDto[]>('/api/hr/leave-requests', { params: { status } }),
+  createLeaveRequest: (data: CreateLeaveRequestRequest) =>
+    request<LeaveRequestDto>('/api/hr/leave-requests', { method: 'POST', body: data }),
+  approveLeaveRequest: (id: string) =>
+    request<LeaveRequestDto>(`/api/hr/leave-requests/${id}/approve`, { method: 'POST' }),
+  rejectLeaveRequest: (id: string) =>
+    request<LeaveRequestDto>(`/api/hr/leave-requests/${id}/reject`, { method: 'POST' }),
+  getEmployeeLeaveBalances: (employeeId: string, year?: number) =>
+    request<LeaveBalanceDto[]>(`/api/hr/employees/${employeeId}/leave-balances`, { params: { year } }),
+  getSchedulingOverview: () => request<WorkScheduleDto[]>('/api/hr/scheduling'),
+  getEmployeeSchedule: (employeeId: string) =>
+    request<WorkScheduleDto[]>(`/api/hr/employees/${employeeId}/schedule`),
+  upsertEmployeeSchedule: (employeeId: string, items: UpsertWorkScheduleItemRequest[]) =>
+    request<WorkScheduleDto[]>(`/api/hr/employees/${employeeId}/schedule`, { method: 'PUT', body: items }),
+  getEmployeeReviews: (employeeId: string) =>
+    request<PerformanceReviewDto[]>(`/api/hr/employees/${employeeId}/reviews`),
+  createPerformanceReview: (employeeId: string, data: CreatePerformanceReviewRequest) =>
+    request<PerformanceReviewDto>(`/api/hr/employees/${employeeId}/reviews`, { method: 'POST', body: data }),
 };

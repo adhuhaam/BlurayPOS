@@ -23,22 +23,37 @@ public class GetDashboardQueryHandler(IPosDbContext db) : IRequestHandler<GetDas
         var todayOrders = await ordersQuery.Where(o => o.CompletedAt >= today).ToListAsync(cancellationToken);
         var weekOrders = await ordersQuery.Where(o => o.CompletedAt >= weekStart).ToListAsync(cancellationToken);
 
-        var topProducts = await db.OrderLines
-            .Where(l => l.Order.Status == OrderStatus.Completed && l.Order.CompletedAt >= weekStart)
-            .Where(l => !request.StoreId.HasValue || l.Order.StoreId == request.StoreId.Value)
+        var lineRows = await (
+            from line in db.OrderLines
+            join order in db.Orders on line.OrderId equals order.Id
+            where order.Status == OrderStatus.Completed && order.CompletedAt >= weekStart
+            where !request.StoreId.HasValue || order.StoreId == request.StoreId.Value
+            select new { line.ProductId, line.ProductName, line.Quantity, line.LineTotal }
+        ).ToListAsync(cancellationToken);
+
+        var topProducts = lineRows
             .GroupBy(l => new { l.ProductId, l.ProductName })
-            .Select(g => new TopProductDto(g.Key.ProductId, g.Key.ProductName, g.Sum(l => l.Quantity), g.Sum(l => l.LineTotal)))
+            .Select(g => new TopProductDto(
+                g.Key.ProductId,
+                g.Key.ProductName,
+                g.Sum(x => x.Quantity),
+                g.Sum(x => x.LineTotal)))
             .OrderByDescending(p => p.Revenue)
             .Take(10)
-            .ToListAsync(cancellationToken);
+            .ToList();
 
-        var storeSales = await (
+        var storeRows = await (
             from o in db.Orders
             join s in db.Stores on o.StoreId equals s.Id
             where o.Status == OrderStatus.Completed && o.CompletedAt >= weekStart
-            group o by new { o.StoreId, s.Name } into g
-            select new StoreSalesDto(g.Key.StoreId, g.Key.Name, g.Sum(o => o.Total), g.Count())
-        ).OrderByDescending(s => s.TotalSales).ToListAsync(cancellationToken);
+            select new { o.StoreId, s.Name, o.Total }
+        ).ToListAsync(cancellationToken);
+
+        var storeSales = storeRows
+            .GroupBy(x => new { x.StoreId, x.Name })
+            .Select(g => new StoreSalesDto(g.Key.StoreId, g.Key.Name, g.Sum(x => x.Total), g.Count()))
+            .OrderByDescending(s => s.TotalSales)
+            .ToList();
 
         return new DashboardReportDto(
             todayOrders.Sum(o => o.Total),

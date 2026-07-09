@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" role="img" aria-label="BlurayPOS">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="72%">
+      <stop offset="0%" stop-color="#2b6bff"/>
+      <stop offset="55%" stop-color="#1a4fd6"/>
+      <stop offset="100%" stop-color="#0b1f6d"/>
+    </radialGradient>
+    <linearGradient id="body" x1="148" y1="96" x2="360" y2="404">
+      <stop stop-color="#ffffff"/>
+      <stop offset="0.55" stop-color="#f4f8ff"/>
+      <stop offset="1" stop-color="#d7e5ff"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="160" y1="120" x2="330" y2="360">
+      <stop stop-color="#7ec0ff"/>
+      <stop offset="1" stop-color="#2f7dff"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="soft-shadow" x="-20%" y="-10%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#02103f" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+
+  <g filter="url(#soft-shadow)">
+    <g filter="url(#glow)">
+      <!-- Upper B loop -->
+      <path
+        fill="url(#body)"
+        stroke="url(#edge)"
+        stroke-width="4"
+        stroke-linejoin="round"
+        d="M154 118
+           V198
+           H214
+           C262 198 292 176 292 144
+           C292 112 262 96 214 96
+           H170
+           C160 96 154 104 154 118
+           Z"
+      />
+      <!-- Lower B loop -->
+      <path
+        fill="url(#body)"
+        stroke="url(#edge)"
+        stroke-width="4"
+        stroke-linejoin="round"
+        d="M154 236
+           V392
+           C154 404 162 412 176 412
+           H228
+           C296 412 334 372 334 318
+           C334 264 296 236 236 236
+           H198
+           C176 236 154 252 154 276
+           Z"
+      />
+      <!-- POS chip square -->
+      <rect x="154" y="332" width="52" height="52" rx="14" fill="url(#body)" stroke="url(#edge)" stroke-width="4"/>
+    </g>
+
+    <!-- Diagonal slash gap -->
+    <path
+      fill="url(#bg)"
+      d="M132 214 L360 154 L372 188 L144 248 Z"
+    />
+  </g>
+</svg>

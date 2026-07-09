@@ -4,7 +4,11 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
+const devApiPort = process.env.DEV_API_PORT || '5147';
+const devApiTarget = `http://localhost:${devApiPort}`;
+
 export default defineConfig({
+  envDir: path.resolve(__dirname, '../../env'),
   plugins: [
     react(),
     tailwindcss(),
@@ -32,5 +36,12 @@ export default defineConfig({
       '@pos/offline-sync': path.resolve(__dirname, '../../packages/offline-sync/src'),
     },
   },
-  server: { port: 5173 },
+  server: {
+    port: 5173,
+    host: true,
+    proxy: {
+      '/api': { target: devApiTarget, changeOrigin: true },
+      '/hubs': { target: devApiTarget, changeOrigin: true, ws: true },
+    },
+  },
 });

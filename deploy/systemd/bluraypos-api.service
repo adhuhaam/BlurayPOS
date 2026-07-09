@@ -1,0 +1,27 @@
+[Unit]
+Description=BlurayPOS API (.NET 9)
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/bluraypos/publish/api
+EnvironmentFile=/opt/bluraypos/.env
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5000
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+ExecStart=/usr/share/dotnet/dotnet /opt/bluraypos/publish/api/Pos.Api.dll
+Restart=always
+RestartSec=5
+KillSignal=SIGINT
+SyslogIdentifier=bluraypos-api
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

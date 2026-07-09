@@ -80,7 +80,8 @@ public class AuthService(
             Currency = request.Currency,
             Timezone = request.Timezone,
             DefaultTaxRate = 0.08m,
-            ReceiptHeader = request.BusinessName
+            ReceiptHeader = request.BusinessName,
+            BusinessType = ParseBusinessType(request.BusinessType)
         };
         db.Organizations.Add(org);
 
@@ -89,9 +90,10 @@ public class AuthService(
             OrganizationId = org.Id,
             PlanId = freePlan.Id,
             Status = SubscriptionStatus.Active,
-            CurrentPeriodStart = DateTime.UtcNow,
-            CurrentPeriodEnd = DateTime.UtcNow.AddYears(1)
         };
+        var (periodStart, periodEnd) = SubscriptionPeriodCalculator.NewYearlyPeriod(DateTime.UtcNow);
+        subscription.CurrentPeriodStart = periodStart;
+        subscription.CurrentPeriodEnd = periodEnd;
         db.Subscriptions.Add(subscription);
 
         var mainStore = new Store
@@ -165,11 +167,31 @@ public class AuthService(
         var permissions = await permissionService.GetPermissionsForRolesAsync(roles, user.OrganizationId, cancellationToken);
         var subscription = await subscriptionService.GetSubscriptionAsync(cancellationToken);
 
+        string? businessType = null;
+        string? organizationSlug = null;
+        TenantFeaturesDto? tenantFeatures = null;
+        if (user.OrganizationId.HasValue)
+        {
+            var org = await db.Organizations
+                .Include(o => o.Subscription!)
+                .ThenInclude(s => s.Plan)
+                .FirstOrDefaultAsync(o => o.Id == user.OrganizationId.Value, cancellationToken);
+            if (org != null)
+            {
+                businessType = org.BusinessType.ToString();
+                organizationSlug = org.Slug;
+                tenantFeatures = TenantFeatureResolver.Resolve(org, org.Subscription?.Plan);
+            }
+        }
+
         return new MeResponse(
             new UserDto(user.Id, user.Email!, user.FirstName, user.LastName, user.OrganizationId, user.DefaultStoreId),
             roles,
             permissions,
-            subscription);
+            subscription,
+            businessType,
+            tenantFeatures,
+            organizationSlug);
     }
 
     private async Task EnsureOrganizationActiveAsync(ApplicationUser user, CancellationToken ct)
@@ -226,7 +248,12 @@ public class AuthService(
 
         return await query
             .OrderBy(s => s.Name)
-            .Select(s => new StoreDto(s.Id, s.Name, s.Code, s.Address, s.Phone, s.IsActive))
+            .Select(s => new StoreDto(
+                s.Id, s.Name, s.Code, s.Address, s.Phone, s.IsActive,
+                s.OnlineMenuEnabled, s.OnlineOrderingEnabled,
+                s.AllowPickup, s.AllowDelivery, s.AllowDineIn,
+                s.AllowCashOnDelivery, s.AllowBankTransfer,
+                s.MinOrderAmount, s.DeliveryFeeFlat, s.OnlineMenuWelcomeText))
             .ToListAsync(ct);
     }
 
@@ -243,6 +270,9 @@ public class AuthService(
 
         return slug;
     }
+
+    private static BusinessType ParseBusinessType(string? value) =>
+        Enum.TryParse<BusinessType>(value, ignoreCase: true, out var parsed) ? parsed : BusinessType.Restaurant;
 }
 
 public class UserService(
@@ -250,7 +280,8 @@ public class UserService(
     RoleManager<IdentityRole<Guid>> roleManager,
     PosDbContext db,
     ITenantContext tenant,
-    IAuditService audit) : IUserService
+    IAuditService audit,
+    EmployeeSyncService employeeSync) : IUserService
 {
     public async Task<UserDto> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken = default)
     {
@@ -297,6 +328,8 @@ public class UserService(
         }
 
         await audit.LogAsync("User", user.Id, "Created", cancellationToken: cancellationToken);
+
+        await employeeSync.SyncFromUserAsync(user, request.Role, cancellationToken);
 
         return new UserDto(user.Id, user.Email!, user.FirstName, user.LastName, user.OrganizationId, user.DefaultStoreId);
     }
@@ -377,6 +410,8 @@ public class UserService(
         await audit.LogAsync("User", user.Id, request.IsActive ? "Updated" : "Suspended", cancellationToken: cancellationToken);
 
         var roles = await userManager.GetRolesAsync(user);
+        await employeeSync.SyncFromUserAsync(user, roles.FirstOrDefault() ?? request.Role, cancellationToken);
+
         return new UserListItemDto(
             user.Id,
             user.Email!,

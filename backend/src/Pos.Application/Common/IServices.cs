@@ -32,6 +32,7 @@ public interface IPlatformService
     Task<PlanAdminDto> CreatePlanAsync(UpsertPlanRequest request, CancellationToken cancellationToken = default);
     Task<PlanAdminDto> UpdatePlanAsync(Guid planId, UpsertPlanRequest request, CancellationToken cancellationToken = default);
     Task DeactivatePlanAsync(Guid planId, CancellationToken cancellationToken = default);
+    Task<PlatformReportsDto> GetPlatformReportsAsync(CancellationToken cancellationToken = default);
     Task<IList<PlatformUserListItemDto>> ListPlatformUsersAsync(Guid? organizationId, string? search, CancellationToken cancellationToken = default);
     Task<PlatformUserListItemDto> UpdatePlatformUserAsync(Guid userId, UpdatePlatformUserRequest request, CancellationToken cancellationToken = default);
 }
@@ -43,4 +44,16 @@ public interface ISubscriptionService
     Task<SubscriptionDto> ChangePlanAsync(ChangePlanRequest request, CancellationToken cancellationToken = default);
     Task<CheckoutResponse> CreateCheckoutAsync(ChangePlanRequest request, CancellationToken cancellationToken = default);
     Task<SubscriptionPaymentDto> SubmitPaymentAsync(SubmitSubscriptionPaymentRequest request, CancellationToken cancellationToken = default);
+    Task<IList<SubscriptionPaymentDto>> ListMyPaymentsAsync(CancellationToken cancellationToken = default);
+    Task<SubscriptionBillingInfoDto> GetBillingInfoAsync(CancellationToken cancellationToken = default);
+}
+
+public interface ISubscriptionLifecycleService
+{
+    Task<int> ProcessExpiriesAsync(CancellationToken cancellationToken = default);
+}
+
+public interface IPublicMarketingService
+{
+    Task<PublicMarketingDto> GetMarketingDataAsync(CancellationToken cancellationToken = default);
 }

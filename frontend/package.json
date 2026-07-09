@@ -6,10 +6,16 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently -n pos,admin -c cyan,magenta \"npm run dev -w @pos/pos-terminal\" \"npm run dev -w @pos/admin-portal\"",
-    "build": "npm run build -w @pos/pos-terminal && npm run build -w @pos/admin-portal",
+    "dev": "concurrently -n pos,admin,www,coupons,menu,order -c cyan,magenta,blue,yellow,green,violet \"npm run dev -w @pos/pos-terminal\" \"npm run dev -w @pos/admin-portal\" \"npm run dev -w @pos/marketing-site\" \"npm run dev -w @pos/coupons-site\" \"npm run dev -w @pos/online-menu\" \"npm run dev -w @pos/online-order\"",
+    "dev:lan": "concurrently -n pos,admin,www,coupons,menu,order -c cyan,magenta,blue,yellow,green,violet \"npm run dev -w @pos/pos-terminal -- --host\" \"npm run dev -w @pos/admin-portal -- --host\" \"npm run dev -w @pos/marketing-site -- --host\" \"npm run dev -w @pos/coupons-site -- --host\" \"npm run dev -w @pos/online-menu -- --host\" \"npm run dev -w @pos/online-order -- --host\"",
+    "build": "npm run build:production",
+    "build:production": "npm run build -w @pos/marketing-site && npm run build -w @pos/coupons-site && npm run build -w @pos/online-menu && npm run build -w @pos/online-order && npm run build -w @pos/pos-terminal && npm run build -w @pos/admin-portal",
     "dev:pos": "npm run dev -w @pos/pos-terminal",
-    "dev:admin": "npm run dev -w @pos/admin-portal"
+    "dev:admin": "npm run dev -w @pos/admin-portal",
+    "dev:www": "npm run dev -w @pos/marketing-site",
+    "dev:coupons": "npm run dev -w @pos/coupons-site",
+    "dev:menu": "npm run dev -w @pos/online-menu",
+    "dev:order": "npm run dev -w @pos/online-order"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

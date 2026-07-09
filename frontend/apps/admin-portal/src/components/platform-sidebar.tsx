@@ -6,6 +6,7 @@ import {
   UsersIcon,
   SettingsIcon,
   LogOutIcon,
+  BarChart3Icon,
 } from 'lucide-react';
 import { useAuth } from '@/auth';
 import {
@@ -26,13 +27,21 @@ import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 
-const nav = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  end?: boolean;
+};
+
+const nav: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboardIcon, end: true },
+  { to: '/reports', label: 'Revenue & Sales', icon: BarChart3Icon },
   { to: '/plans', label: 'Plans', icon: LayersIcon },
   { to: '/tenants', label: 'Stores', icon: Building2Icon },
   { to: '/platform-users', label: 'Users', icon: UsersIcon },
   { to: '/platform-settings', label: 'Platform Settings', icon: SettingsIcon },
-] as const;
+];
 
 export function PlatformSidebar() {
   const { user, logout } = useAuth();

@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@import "@fontsource-variable/geist";
+
+@theme inline {
+  --font-sans: 'Geist Variable', system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    @apply font-sans scroll-smooth;
+  }
+
+  body {
+    @apply bg-neutral-50 text-neutral-900 antialiased;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    @apply text-base;
+  }
+}
+
+@layer utilities {
+  .tap-target {
+    @apply min-h-11 min-w-11;
+  }
+}

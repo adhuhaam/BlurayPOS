@@ -49,6 +49,8 @@ public interface IPosRealtimeNotifier
 {
     Task NotifyOrderCompletedAsync(Guid storeId, Guid orderId, string orderNumber, CancellationToken cancellationToken = default);
     Task NotifyInventoryUpdatedAsync(Guid storeId, Guid productId, int quantityOnHand, CancellationToken cancellationToken = default);
+    Task NotifyKitchenOrderAsync(Guid storeId, Guid orderId, string orderNumber, string? tableName, object lines, CancellationToken cancellationToken = default);
+    Task NotifyOnlineOrderSubmittedAsync(Guid storeId, Guid orderId, string orderNumber, decimal total, string customerName, string serviceType, string paymentMethod, CancellationToken cancellationToken = default);
 }
 
 public interface IPaymentProviderResolver

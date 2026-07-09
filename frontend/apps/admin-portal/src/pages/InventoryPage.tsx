@@ -79,9 +79,9 @@ export function InventoryPage() {
 
       <Alert>
         <AlertDescription className="text-sm">
-          This page tracks <strong>retail products</strong> (finished goods). Recipe-based menu items deduct ingredients from{' '}
-          <Link to="/supplies" className="font-medium underline">Supplies</Link> instead — create those on the{' '}
-          <Link to="/products" className="font-medium underline">Products</Link> page first.
+          This page tracks <strong>retail products</strong> (finished goods). Recipe-based menu items deduct from{' '}
+          <Link to="/supplies" className="font-medium underline">Ingredients</Link> instead — set those up first, then add recipes on{' '}
+          <Link to="/products?view=recipes" className="font-medium underline">Recipes</Link>.
         </AlertDescription>
       </Alert>
 

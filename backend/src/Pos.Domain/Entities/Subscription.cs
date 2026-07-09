@@ -22,6 +22,10 @@ public class Plan : BaseEntity
     public bool HasAdvancedReports { get; set; }
     public bool HasApi { get; set; }
     public bool HasPurchases { get; set; }
+    public bool HasOnlineMenu { get; set; }
+    public bool HasOnlineOrdering { get; set; }
+    public bool HasCoupons { get; set; }
+    public bool HasHr { get; set; }
     public bool IsActive { get; set; } = true;
     public int SortOrder { get; set; }
 

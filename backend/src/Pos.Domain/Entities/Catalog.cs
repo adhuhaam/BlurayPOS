@@ -25,6 +25,9 @@ public class Product : TenantEntity
     public bool IsActive { get; set; } = true;
     public bool TrackInventory { get; set; } = true;
     public ProductInventoryMode InventoryMode { get; set; } = ProductInventoryMode.FinishedGood;
+    public bool IsOnlineVisible { get; set; } = true;
+    public string? OnlineDescription { get; set; }
+    public string? ImageUrl { get; set; }
 
     public Category? Category { get; set; }
     public Organization Organization { get; set; } = null!;

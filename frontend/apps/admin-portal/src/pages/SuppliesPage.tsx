@@ -4,6 +4,7 @@ import { PlusIcon, PackageIcon, TrendingUpIcon, ClipboardListIcon, AlertTriangle
 import { api, ApiError, type SupplyItemDto, type SupplyLogDto, type StoreDto } from '@pos/api-client';
 import { PageHeader } from '@/components/page-header';
 import { CatalogWorkflowBanner } from '@/components/catalog-workflow-banner';
+import { useAuth } from '@/auth';
 import { FormSelect } from '@/components/form-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ const UNITS = ['piece', 'kg', 'g', 'litre', 'ml', 'carton', 'box', 'bottle', 'ba
 type Tab = 'stock' | 'supply' | 'logs';
 
 export function SuppliesPage() {
+  const { tenantFeatures } = useAuth();
   const [stores, setStores] = useState<StoreDto[]>([]);
   const [storeId, setStoreId] = useState('');
   const [items, setItems] = useState<SupplyItemDto[]>([]);
@@ -103,11 +105,27 @@ export function SuppliesPage() {
     }
   };
 
+  if (tenantFeatures && !tenantFeatures.catalogIngredients) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHeader title="Ingredients" description="Not available for retail-only stores" />
+        <Alert>
+          <AlertDescription>
+            Your store is set to <strong>Retail</strong> mode — ingredients and recipes are hidden.
+            Add products with barcodes on <Link to="/products" className="font-medium underline">Products</Link> and track stock on{' '}
+            <Link to="/inventory" className="font-medium underline">Inventory</Link>.
+            Change industry in <Link to="/settings" className="font-medium underline">Settings</Link> if you also serve food.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Supplies & Ingredients"
-        description="Set up ingredients first — then link them to recipe products"
+        title="Ingredients"
+        description="Step 1 — add raw materials and components before building your menu"
         action={tab === 'stock' ? <Button onClick={openAddItem}><PlusIcon data-icon="inline-start" />Add Ingredient</Button> : undefined}
       />
 
@@ -115,8 +133,9 @@ export function SuppliesPage() {
 
       <Alert>
         <AlertDescription className="text-sm">
-          Step 1: Add ingredients here. Step 2: Create a recipe product on{' '}
-          <Link to="/products" className="font-medium underline">Products</Link> and link these ingredients to it.
+          Next: create menu items on{' '}
+          <Link to="/products" className="font-medium underline">Products</Link>, then link ingredients on{' '}
+          <Link to="/products?view=recipes" className="font-medium underline">Recipes</Link>.
         </AlertDescription>
       </Alert>
 

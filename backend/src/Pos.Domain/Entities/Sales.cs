@@ -18,8 +18,22 @@ public class Order : TenantEntity
     public string? Notes { get; set; }
     public string? IdempotencyKey { get; set; }
     public DateTime? CompletedAt { get; set; }
+    public DateTime? SentToKitchenAt { get; set; }
+    public DateTime? BillRequestedAt { get; set; }
+    public OrderSource OrderSource { get; set; } = OrderSource.Pos;
+    public ServiceType? ServiceType { get; set; }
+    public string? PublicTrackingToken { get; set; }
+    public Guid? DiningTableId { get; set; }
+    public string? CustomerName { get; set; }
+    public string? CustomerPhone { get; set; }
+    public string? DeliveryAddress { get; set; }
+    public string? DeliveryNotes { get; set; }
+    public DateTime? ScheduledFor { get; set; }
+    public PaymentMethod? OnlinePaymentMethod { get; set; }
+    public string? RejectedReason { get; set; }
 
     public Store Store { get; set; } = null!;
+    public DiningTable? DiningTable { get; set; }
     public Shift? Shift { get; set; }
     public Customer? Customer { get; set; }
     public ICollection<OrderLine> Lines { get; set; } = [];

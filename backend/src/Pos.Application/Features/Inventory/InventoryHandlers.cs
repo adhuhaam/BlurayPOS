@@ -24,10 +24,13 @@ public class AdjustInventoryCommandValidator : AbstractValidator<AdjustInventory
     }
 }
 
-public class GetInventoryQueryHandler(IPosDbContext db) : IRequestHandler<GetInventoryQuery, IList<InventoryItemDto>>
+public class GetInventoryQueryHandler(IPosDbContext db, ITenantContext tenant) : IRequestHandler<GetInventoryQuery, IList<InventoryItemDto>>
 {
     public async Task<IList<InventoryItemDto>> Handle(GetInventoryQuery request, CancellationToken cancellationToken)
     {
+        if (!tenant.OrganizationId.HasValue) throw new InvalidOperationException("Organization required.");
+        await PlanModuleGuards.EnsureInventoryEnabledAsync(db, tenant.OrganizationId.Value, cancellationToken);
+
         var query = db.InventoryItems
             .Include(i => i.Product)
             .Where(i => i.StoreId == request.StoreId);
@@ -47,6 +50,7 @@ public class AdjustInventoryCommandHandler(IPosDbContext db, ITenantContext tena
     public async Task<InventoryItemDto> Handle(AdjustInventoryCommand command, CancellationToken cancellationToken)
     {
         if (!tenant.OrganizationId.HasValue) throw new InvalidOperationException("Organization required.");
+        await PlanModuleGuards.EnsureInventoryEnabledAsync(db, tenant.OrganizationId.Value, cancellationToken);
 
         var item = await db.InventoryItems.Include(i => i.Product)
             .FirstOrDefaultAsync(i => i.StoreId == command.StoreId && i.ProductId == command.Request.ProductId, cancellationToken);
@@ -92,6 +96,7 @@ public class CreateStockTransferCommandHandler(IPosDbContext db, ITenantContext 
     public async Task<StockTransferDto> Handle(CreateStockTransferCommand command, CancellationToken cancellationToken)
     {
         if (!tenant.OrganizationId.HasValue) throw new InvalidOperationException("Organization required.");
+        await PlanModuleGuards.EnsureInventoryEnabledAsync(db, tenant.OrganizationId.Value, cancellationToken);
 
         var fromItem = await db.InventoryItems.FirstOrDefaultAsync(i => i.StoreId == command.Request.FromStoreId && i.ProductId == command.Request.ProductId, cancellationToken)
             ?? throw new InvalidOperationException("Source inventory not found.");
@@ -131,6 +136,7 @@ public class CompleteStockTransferCommandHandler(IPosDbContext db, ITenantContex
     public async Task<StockTransferDto> Handle(CompleteStockTransferCommand command, CancellationToken cancellationToken)
     {
         if (!tenant.OrganizationId.HasValue) throw new InvalidOperationException("Organization required.");
+        await PlanModuleGuards.EnsureInventoryEnabledAsync(db, tenant.OrganizationId.Value, cancellationToken);
 
         var transfer = await db.StockTransfers.FindAsync([command.Id], cancellationToken)
             ?? throw new KeyNotFoundException("Transfer not found.");
@@ -160,10 +166,13 @@ public class CompleteStockTransferCommandHandler(IPosDbContext db, ITenantContex
     }
 }
 
-public class GetStockTransfersQueryHandler(IPosDbContext db) : IRequestHandler<GetStockTransfersQuery, IList<StockTransferDto>>
+public class GetStockTransfersQueryHandler(IPosDbContext db, ITenantContext tenant) : IRequestHandler<GetStockTransfersQuery, IList<StockTransferDto>>
 {
     public async Task<IList<StockTransferDto>> Handle(GetStockTransfersQuery request, CancellationToken cancellationToken)
     {
+        if (!tenant.OrganizationId.HasValue) throw new InvalidOperationException("Organization required.");
+        await PlanModuleGuards.EnsureInventoryEnabledAsync(db, tenant.OrganizationId.Value, cancellationToken);
+
         var transfers = await db.StockTransfers.OrderByDescending(t => t.CreatedAt).Take(100).ToListAsync(cancellationToken);
         var result = new List<StockTransferDto>();
         foreach (var t in transfers)

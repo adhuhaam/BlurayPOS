@@ -9,9 +9,12 @@ import {
   getStoredPermissions,
   getSelectedStoreId,
   setSelectedStoreId,
+  resolveTenantFeatures,
   type UserDto,
   type StoreDto,
   type ShiftDto,
+  type BusinessType,
+  type TenantFeaturesDto,
 } from '@pos/api-client';
 
 interface PosContextValue {
@@ -22,6 +25,8 @@ interface PosContextValue {
   storeId: string | null;
   store: StoreDto | null;
   shift: ShiftDto | null;
+  businessType: BusinessType | null;
+  tenantFeatures: TenantFeaturesDto | null;
   isAuthenticated: boolean;
   loading: boolean;
   login: (email: string, password: string, storeId: string) => Promise<void>;
@@ -40,6 +45,8 @@ export function PosProvider({ children }: { children: ReactNode }) {
   const [stores, setStores] = useState<StoreDto[]>([]);
   const [storeId, setStoreIdState] = useState<string | null>(getSelectedStoreId());
   const [shift, setShift] = useState<ShiftDto | null>(null);
+  const [businessType, setBusinessType] = useState<BusinessType | null>(null);
+  const [tenantFeatures, setTenantFeatures] = useState<TenantFeaturesDto | null>(null);
   const [loading, setLoading] = useState(true);
 
   const store = stores.find((s) => s.id === storeId) ?? null;
@@ -53,6 +60,20 @@ export function PosProvider({ children }: { children: ReactNode }) {
     setShift(current);
   };
 
+  const loadTenantContext = async () => {
+    try {
+      const me = await api.getMe();
+      setBusinessType(me.businessType);
+      setTenantFeatures(
+        me.tenantFeatures
+          ?? (me.businessType ? resolveTenantFeatures(me.businessType, me.subscription) : null),
+      );
+    } catch {
+      setBusinessType(null);
+      setTenantFeatures(null);
+    }
+  };
+
   useEffect(() => {
     const token = getAccessToken();
     if (token) {
@@ -60,7 +81,7 @@ export function PosProvider({ children }: { children: ReactNode }) {
       setStores(getStoredStores<StoreDto>());
       setRoles(getStoredRoles());
       setPermissions(getStoredPermissions());
-      refreshShift().finally(() => setLoading(false));
+      Promise.all([refreshShift(), loadTenantContext()]).finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
@@ -82,7 +103,10 @@ export function PosProvider({ children }: { children: ReactNode }) {
     setStores(result.stores);
     setStoreIdState(selectedStoreId);
     setSelectedStoreId(selectedStoreId);
-    const current = await api.getCurrentShift(selectedStoreId);
+    const [current] = await Promise.all([
+      api.getCurrentShift(selectedStoreId),
+      loadTenantContext(),
+    ]);
     setShift(current);
   };
 
@@ -94,6 +118,8 @@ export function PosProvider({ children }: { children: ReactNode }) {
     setStores([]);
     setStoreIdState(null);
     setShift(null);
+    setBusinessType(null);
+    setTenantFeatures(null);
   };
 
   const setStoreId = (id: string) => {
@@ -105,6 +131,7 @@ export function PosProvider({ children }: { children: ReactNode }) {
     <PosContext.Provider
       value={{
         user, roles, permissions, stores, storeId, store, shift,
+        businessType, tenantFeatures,
         isAuthenticated: !!user && !!storeId,
         loading, login, logout, setStoreId, refreshShift, hasPermission,
       }}

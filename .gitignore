@@ -9,10 +9,13 @@ obj/
 node_modules/
 dist/
 
-# Env
+# Env — secrets & local overrides only (committed env: frontend/env/.env.development + .env.production)
 .env
 .env.local
 .env.*.local
+frontend/apps/**/.env*
+frontend/env/.env.development.local
+frontend/env/.env.production.local
 
 # IDE
 .idea/
@@ -23,3 +26,17 @@ dist/
 coverage/
 uploads/
 _mio_ref/
+.dev-api-port
+
+# Android / Gradle
+terminal_app/.gradle/
+terminal_app/**/build/
+terminal_app/local.properties
+terminal_app/.idea/
+terminal_app/*.iml
+*.apk
+*.aab
+
+# Cursor / local
+.cursor/
+BlurayPOS.zip

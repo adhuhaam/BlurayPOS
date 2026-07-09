@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Pos.Application.Common;
 using Pos.Application.DTOs;
 using Pos.Domain.Entities;
@@ -18,7 +19,9 @@ public static class PlanMapper
         p.PriceMonthly, p.PriceYearly,
         p.MaxStores, p.MaxUsers, p.MaxTerminals, p.MaxProducts, p.MaxMonthlyOrders,
         p.HasInventory, p.HasKitchen, p.HasDelivery, p.HasAccounting,
-        p.HasAdvancedReports, p.HasApi, p.HasPurchases, p.SortOrder, p.IsActive);
+        p.HasAdvancedReports, p.HasApi, p.HasPurchases,
+        p.HasOnlineMenu, p.HasOnlineOrdering, p.HasCoupons, p.HasHr,
+        p.SortOrder, p.IsActive);
 
     public static PlanAdminDto ToAdminDto(Plan p, int subscriberCount) => new(
         p.Id, p.Name, p.Slug, p.Description,
@@ -26,6 +29,7 @@ public static class PlanMapper
         p.MaxStores, p.MaxUsers, p.MaxTerminals, p.MaxProducts, p.MaxMonthlyOrders,
         p.HasInventory, p.HasKitchen, p.HasDelivery, p.HasAccounting,
         p.HasAdvancedReports, p.HasApi, p.HasPurchases,
+        p.HasOnlineMenu, p.HasOnlineOrdering, p.HasCoupons, p.HasHr,
         p.SortOrder, p.IsActive, subscriberCount);
 
     public static void Apply(Plan plan, UpsertPlanRequest request)
@@ -47,9 +51,21 @@ public static class PlanMapper
         plan.HasAdvancedReports = request.HasAdvancedReports;
         plan.HasApi = request.HasApi;
         plan.HasPurchases = request.HasPurchases;
+        plan.HasOnlineMenu = request.HasOnlineMenu;
+        plan.HasOnlineOrdering = request.HasOnlineOrdering;
+        plan.HasCoupons = request.HasCoupons;
+        plan.HasHr = request.HasHr;
         plan.SortOrder = request.SortOrder;
         plan.IsActive = request.IsActive;
     }
+}
+
+public static class StoreMapper
+{
+    public static StoreDto ToDto(Store s) => new(
+        s.Id, s.Name, s.Code, s.Address, s.Phone, s.IsActive,
+        s.OnlineMenuEnabled, s.OnlineOrderingEnabled, s.AllowPickup, s.AllowDelivery, s.AllowDineIn,
+        s.AllowCashOnDelivery, s.AllowBankTransfer, s.MinOrderAmount, s.DeliveryFeeFlat, s.OnlineMenuWelcomeText);
 }
 
 public class StoreService(
@@ -78,7 +94,7 @@ public class StoreService(
 
         return await query
             .OrderBy(s => s.Name)
-            .Select(s => new StoreDto(s.Id, s.Name, s.Code, s.Address, s.Phone, s.IsActive))
+            .Select(s => StoreMapper.ToDto(s))
             .ToListAsync(cancellationToken);
     }
 
@@ -118,7 +134,7 @@ public class StoreService(
         await audit.LogAsync("Store", store.Id, "Created", cancellationToken: cancellationToken);
 
         return new CreateStoreResponse(
-            new StoreDto(store.Id, store.Name, store.Code, store.Address, store.Phone, store.IsActive),
+            StoreMapper.ToDto(store),
             storeAdmin);
     }
 
@@ -127,15 +143,30 @@ public class StoreService(
         var store = await db.Stores.FindAsync([storeId], cancellationToken)
             ?? throw new KeyNotFoundException("Store not found.");
 
+        if (request.OnlineMenuEnabled == true)
+            await PlanModuleGuards.EnsureOnlineMenuEnabledAsync(db, store.OrganizationId, cancellationToken);
+        if (request.OnlineOrderingEnabled == true)
+            await PlanModuleGuards.EnsureOnlineOrderingEnabledAsync(db, store.OrganizationId, cancellationToken);
+
         store.Name = request.Name;
         store.Address = request.Address;
         store.Phone = request.Phone;
         store.IsActive = request.IsActive;
+        if (request.OnlineMenuEnabled.HasValue) store.OnlineMenuEnabled = request.OnlineMenuEnabled.Value;
+        if (request.OnlineOrderingEnabled.HasValue) store.OnlineOrderingEnabled = request.OnlineOrderingEnabled.Value;
+        if (request.AllowPickup.HasValue) store.AllowPickup = request.AllowPickup.Value;
+        if (request.AllowDelivery.HasValue) store.AllowDelivery = request.AllowDelivery.Value;
+        if (request.AllowDineIn.HasValue) store.AllowDineIn = request.AllowDineIn.Value;
+        if (request.AllowCashOnDelivery.HasValue) store.AllowCashOnDelivery = request.AllowCashOnDelivery.Value;
+        if (request.AllowBankTransfer.HasValue) store.AllowBankTransfer = request.AllowBankTransfer.Value;
+        if (request.MinOrderAmount.HasValue) store.MinOrderAmount = request.MinOrderAmount.Value;
+        if (request.DeliveryFeeFlat.HasValue) store.DeliveryFeeFlat = request.DeliveryFeeFlat.Value;
+        if (request.OnlineMenuWelcomeText != null) store.OnlineMenuWelcomeText = request.OnlineMenuWelcomeText;
 
         await db.SaveChangesAsync(cancellationToken);
         await audit.LogAsync("Store", store.Id, "Updated", cancellationToken: cancellationToken);
 
-        return new StoreDto(store.Id, store.Name, store.Code, store.Address, store.Phone, store.IsActive);
+        return StoreMapper.ToDto(store);
     }
 
     private async Task<UserDto> CreateStoreAdminAsync(Guid orgId, Guid storeId, StoreAdminInput admin, CancellationToken ct)
@@ -222,6 +253,10 @@ public class OrganizationService(
         org.ReceiptFooter = request.ReceiptFooter;
         org.PaymentQrPayload = request.PaymentQrPayload;
         org.PaymentInstructions = request.PaymentInstructions;
+        if (!string.IsNullOrWhiteSpace(request.BusinessType))
+            org.BusinessType = Enum.TryParse<BusinessType>(request.BusinessType, ignoreCase: true, out var parsed)
+                ? parsed
+                : org.BusinessType;
 
         await db.SaveChangesAsync(cancellationToken);
         await audit.LogAsync("Organization", org.Id, "Updated", cancellationToken: cancellationToken);
@@ -230,7 +265,7 @@ public class OrganizationService(
     }
 
     private static OrganizationDto Map(Organization org) =>
-        new(org.Id, org.Name, org.Slug, org.DefaultTaxRate, org.Currency, org.ReceiptHeader, org.ReceiptFooter, org.PaymentQrPayload, org.PaymentInstructions);
+        new(org.Id, org.Name, org.Slug, org.DefaultTaxRate, org.Currency, org.ReceiptHeader, org.ReceiptFooter, org.PaymentQrPayload, org.PaymentInstructions, org.BusinessType.ToString());
 }
 
 public class PlatformService(
@@ -258,6 +293,13 @@ public class PlatformService(
             var storeCount = await db.Stores.IgnoreQueryFilters().CountAsync(s => s.OrganizationId == org.Id, cancellationToken);
             var userCount = await userManager.Users.CountAsync(u => u.OrganizationId == org.Id, cancellationToken);
 
+            var periodEnd = org.Subscription?.CurrentPeriodEnd;
+            var daysRemaining = periodEnd.HasValue
+                ? SubscriptionPeriodCalculator.IsExpired(periodEnd.Value, DateTime.UtcNow)
+                    ? 0
+                    : SubscriptionPeriodCalculator.DaysRemaining(periodEnd.Value, DateTime.UtcNow)
+                : (int?)null;
+
             result.Add(new OrganizationListItemDto(
                 org.Id,
                 org.Name,
@@ -269,7 +311,9 @@ public class PlatformService(
                 org.IsReadOnly,
                 storeCount,
                 userCount,
-                org.CreatedAt));
+                org.CreatedAt,
+                periodEnd,
+                daysRemaining));
         }
 
         return result;
@@ -307,9 +351,10 @@ public class PlatformService(
             OrganizationId = org.Id,
             PlanId = plan.Id,
             Status = SubscriptionStatus.Active,
-            CurrentPeriodStart = DateTime.UtcNow,
-            CurrentPeriodEnd = DateTime.UtcNow.AddYears(1)
         };
+        var (periodStart, periodEnd) = SubscriptionPeriodCalculator.NewYearlyPeriod(DateTime.UtcNow);
+        subscription.CurrentPeriodStart = periodStart;
+        subscription.CurrentPeriodEnd = periodEnd;
         db.Subscriptions.Add(subscription);
 
         if (!await roleManager.RoleExistsAsync(nameof(UserRole.OrgAdmin)))
@@ -337,7 +382,7 @@ public class PlatformService(
 
         var subDto = await MapSubscriptionAsync(subscription, org.Id, cancellationToken);
         return new CreateOrganizationResponse(
-            new OrganizationDto(org.Id, org.Name, org.Slug, org.DefaultTaxRate, org.Currency, org.ReceiptHeader, org.ReceiptFooter, org.PaymentQrPayload, org.PaymentInstructions),
+            new OrganizationDto(org.Id, org.Name, org.Slug, org.DefaultTaxRate, org.Currency, org.ReceiptHeader, org.ReceiptFooter, org.PaymentQrPayload, org.PaymentInstructions, org.BusinessType.ToString()),
             new UserDto(admin.Id, admin.Email!, admin.FirstName, admin.LastName, admin.OrganizationId, admin.DefaultStoreId),
             subDto);
     }
@@ -448,8 +493,9 @@ public class PlatformService(
 
         sub.PlanId = plan.Id;
         sub.Status = SubscriptionStatus.Active;
-        sub.CurrentPeriodStart = DateTime.UtcNow;
-        sub.CurrentPeriodEnd = DateTime.UtcNow.AddYears(1);
+        var (periodStart, periodEnd) = SubscriptionPeriodCalculator.NewYearlyPeriod(DateTime.UtcNow);
+        sub.CurrentPeriodStart = periodStart;
+        sub.CurrentPeriodEnd = periodEnd;
 
         var org = await db.Organizations.IgnoreQueryFilters().FirstAsync(o => o.Id == organizationId, cancellationToken);
         org.IsReadOnly = false;
@@ -849,6 +895,146 @@ public class PlatformService(
             user.OrganizationId, orgName, user.IsActive, user.CreatedAt);
     }
 
+    public async Task<PlatformReportsDto> GetPlatformReportsAsync(CancellationToken cancellationToken = default)
+    {
+        if (!tenant.IsSuperAdmin)
+            throw new UnauthorizedAccessException("SuperAdmin access required.");
+
+        var now = DateTime.UtcNow;
+        var today = now.Date;
+        var weekStart = today.AddDays(-(int)today.DayOfWeek);
+        var monthStart = new DateTime(today.Year, today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var yearStart = new DateTime(today.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        var payments = await db.SubscriptionPayments
+            .IgnoreQueryFilters()
+            .Include(p => p.Organization)
+            .Include(p => p.Plan)
+            .ToListAsync(cancellationToken);
+
+        var verified = payments.Where(p => p.Status == SubscriptionPaymentStatus.Verified).ToList();
+        var pending = payments.Where(p => p.Status == SubscriptionPaymentStatus.Pending).ToList();
+
+        static decimal SumSince(IEnumerable<SubscriptionPayment> items, DateTime since) =>
+            items.Where(p => (p.VerifiedAt ?? p.CreatedAt) >= since).Sum(p => p.Amount);
+
+        var revenueSummary = new PlatformRevenueSummaryDto(
+            TodayRevenue: SumSince(verified, today),
+            WeekRevenue: SumSince(verified, weekStart),
+            MonthRevenue: SumSince(verified, monthStart),
+            YearRevenue: SumSince(verified, yearStart),
+            AllTimeRevenue: verified.Sum(p => p.Amount),
+            PendingRevenue: pending.Sum(p => p.Amount),
+            PendingPaymentCount: pending.Count,
+            VerifiedPaymentCount: verified.Count);
+
+        var subscriberCounts = await db.Subscriptions
+            .IgnoreQueryFilters()
+            .GroupBy(s => s.PlanId)
+            .Select(g => new { PlanId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.PlanId, x => x.Count, cancellationToken);
+
+        var plans = await db.Plans.OrderBy(p => p.SortOrder).ToListAsync(cancellationToken);
+        var revenueByPlan = plans.Select(plan =>
+        {
+            var planPayments = verified.Where(p => p.PlanId == plan.Id).ToList();
+            return new PlanRevenueDto(
+                plan.Id, plan.Name, plan.Slug,
+                subscriberCounts.GetValueOrDefault(plan.Id),
+                planPayments.Sum(p => p.Amount),
+                planPayments.Count);
+        }).ToList();
+
+        var completedOrders = await db.Orders
+            .IgnoreQueryFilters()
+            .Where(o => o.Status == OrderStatus.Completed && o.CompletedAt != null)
+            .Select(o => new { o.OrganizationId, o.Total, o.CompletedAt })
+            .ToListAsync(cancellationToken);
+
+        static (decimal sales, int orders) SumOrdersSince(
+            IEnumerable<(Guid OrgId, decimal Total, DateTime CompletedAt)> items, DateTime since) =>
+        (
+            items.Where(o => o.CompletedAt >= since).Sum(o => o.Total),
+            items.Count(o => o.CompletedAt >= since)
+        );
+
+        var orderTuples = completedOrders
+            .Select(o => (OrgId: o.OrganizationId, Total: o.Total, CompletedAt: o.CompletedAt!.Value))
+            .ToList();
+
+        var todaySales = SumOrdersSince(orderTuples, today);
+        var weekSales = SumOrdersSince(orderTuples, weekStart);
+        var monthSales = SumOrdersSince(orderTuples, monthStart);
+        var yearSales = SumOrdersSince(orderTuples, yearStart);
+
+        var tenantSales = new TenantSalesSummaryDto(
+            todaySales.sales, todaySales.orders,
+            weekSales.sales, weekSales.orders,
+            monthSales.sales, monthSales.orders,
+            yearSales.sales, yearSales.orders);
+
+        var orgs = await db.Organizations.IgnoreQueryFilters()
+            .Select(o => new { o.Id, o.Name })
+            .ToListAsync(cancellationToken);
+
+        var orgPlans = await (
+            from sub in db.Subscriptions.IgnoreQueryFilters()
+            join plan in db.Plans on sub.PlanId equals plan.Id
+            select new { sub.OrganizationId, plan.Name }
+        ).ToDictionaryAsync(x => x.OrganizationId, x => x.Name, cancellationToken);
+
+        var salesByOrg = orderTuples
+            .Where(o => o.CompletedAt >= monthStart)
+            .GroupBy(o => o.OrgId)
+            .Select(g =>
+            {
+                var org = orgs.FirstOrDefault(o => o.Id == g.Key);
+                return new TenantSalesByOrgDto(
+                    g.Key,
+                    org?.Name ?? "Unknown",
+                    orgPlans.GetValueOrDefault(g.Key, "—"),
+                    g.Sum(x => x.Total),
+                    g.Count());
+            })
+            .OrderByDescending(x => x.TotalSales)
+            .Take(20)
+            .ToList();
+
+        var trendStart = monthStart.AddMonths(-11);
+        var monthlyTrend = new List<MonthlyPlatformTrendDto>();
+        for (var i = 0; i < 12; i++)
+        {
+            var pointStart = trendStart.AddMonths(i);
+            var pointEnd = pointStart.AddMonths(1);
+            var subRev = verified
+                .Where(p =>
+                {
+                    var at = p.VerifiedAt ?? p.CreatedAt;
+                    return at >= pointStart && at < pointEnd;
+                })
+                .Sum(p => p.Amount);
+            var tenantRev = orderTuples
+                .Where(o => o.CompletedAt >= pointStart && o.CompletedAt < pointEnd)
+                .Sum(o => o.Total);
+            var tenantOrders = orderTuples
+                .Count(o => o.CompletedAt >= pointStart && o.CompletedAt < pointEnd);
+            monthlyTrend.Add(new MonthlyPlatformTrendDto(
+                pointStart.Year, pointStart.Month, subRev, tenantRev, tenantOrders));
+        }
+
+        var recentPayments = payments
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(10)
+            .Select(p => new SubscriptionPaymentDto(
+                p.Id, p.OrganizationId, p.Organization.Name, p.PlanId, p.Plan.Name,
+                p.Amount, p.Method.ToString(), p.Status.ToString(), p.ProofImagePath, p.Notes,
+                p.PeriodStart, p.PeriodEnd, p.CreatedAt, p.VerifiedAt))
+            .ToList();
+
+        return new PlatformReportsDto(
+            revenueSummary, revenueByPlan, tenantSales, salesByOrg, monthlyTrend, recentPayments);
+    }
+
     private async Task<SubscriptionDto> MapSubscriptionAsync(Subscription sub, Guid orgId, CancellationToken ct)
     {
         var plan = await db.Plans.FindAsync([sub.PlanId], ct) ?? throw new InvalidOperationException();
@@ -856,12 +1042,7 @@ public class PlatformService(
         var storeCount = await db.Stores.IgnoreQueryFilters().CountAsync(s => s.OrganizationId == orgId, ct);
         var userCount = await userManager.Users.CountAsync(u => u.OrganizationId == orgId, ct);
 
-        return new SubscriptionDto(
-            sub.Id, plan.Id, plan.Name, plan.Slug, plan.PriceMonthly, plan.PriceYearly,
-            sub.Status.ToString(), sub.CurrentPeriodStart, sub.CurrentPeriodEnd, sub.TrialEndsAt,
-            plan.MaxStores, plan.MaxUsers, plan.MaxProducts, plan.MaxMonthlyOrders,
-            plan.HasKitchen, plan.HasDelivery, plan.HasAccounting, plan.HasAdvancedReports, plan.HasApi,
-            storeCount, userCount, org.IsReadOnly);
+        return SubscriptionDtoMapper.ToDto(sub, plan, org, storeCount, userCount);
     }
 }
 
@@ -869,7 +1050,8 @@ public class SubscriptionService(
     PosDbContext db,
     ITenantContext tenant,
     UserManager<ApplicationUser> userManager,
-    IAuditService audit) : ISubscriptionService
+    IAuditService audit,
+    IHostEnvironment hostEnvironment) : ISubscriptionService
 {
     public async Task<IList<PlanDto>> ListPlansAsync(CancellationToken cancellationToken = default)
     {
@@ -913,10 +1095,15 @@ public class SubscriptionService(
         if (userCount > plan.MaxUsers)
             throw new InvalidOperationException($"Current user count ({userCount}) exceeds plan limit ({plan.MaxUsers}).");
 
+        var isFreeTarget = SubscriptionPeriodCalculator.IsFreePlan(plan.Slug, plan.PriceYearly);
+        if (!hostEnvironment.IsDevelopment() && !isFreeTarget && plan.PriceYearly > 0)
+            throw new InvalidOperationException("Paid plan changes require payment submission and Super Admin verification.");
+
         sub.PlanId = plan.Id;
         sub.Status = SubscriptionStatus.Active;
-        sub.CurrentPeriodStart = DateTime.UtcNow;
-        sub.CurrentPeriodEnd = DateTime.UtcNow.AddYears(1);
+        var (periodStart, periodEnd) = SubscriptionPeriodCalculator.NewYearlyPeriod(DateTime.UtcNow);
+        sub.CurrentPeriodStart = periodStart;
+        sub.CurrentPeriodEnd = periodEnd;
 
         var org = await db.Organizations.FindAsync([tenant.OrganizationId.Value], cancellationToken);
         if (org != null) org.IsReadOnly = false;
@@ -946,6 +1133,13 @@ public class SubscriptionService(
         if (!Enum.TryParse<SubscriptionPaymentMethod>(request.Method, true, out var method))
             throw new InvalidOperationException("Invalid payment method.");
 
+        var sub = await db.Subscriptions
+            .FirstOrDefaultAsync(s => s.OrganizationId == tenant.OrganizationId.Value, cancellationToken);
+
+        var utcNow = DateTime.UtcNow;
+        var currentEnd = sub?.CurrentPeriodEnd ?? utcNow;
+        var (periodStart, periodEnd) = SubscriptionPeriodCalculator.RenewalPeriod(currentEnd, utcNow);
+
         var payment = new SubscriptionPayment
         {
             OrganizationId = tenant.OrganizationId.Value,
@@ -955,8 +1149,8 @@ public class SubscriptionService(
             Status = SubscriptionPaymentStatus.Pending,
             ProofImagePath = request.ProofImagePath,
             Notes = request.Notes,
-            PeriodStart = DateTime.UtcNow,
-            PeriodEnd = DateTime.UtcNow.AddYears(1)
+            PeriodStart = periodStart,
+            PeriodEnd = periodEnd,
         };
 
         db.SubscriptionPayments.Add(payment);
@@ -972,19 +1166,43 @@ public class SubscriptionService(
             payment.PeriodStart, payment.PeriodEnd, payment.CreatedAt, payment.VerifiedAt);
     }
 
+    public async Task<IList<SubscriptionPaymentDto>> ListMyPaymentsAsync(CancellationToken cancellationToken = default)
+    {
+        if (!tenant.OrganizationId.HasValue)
+            throw new InvalidOperationException("Organization context required.");
+
+        return await db.SubscriptionPayments
+            .Include(p => p.Organization)
+            .Include(p => p.Plan)
+            .Where(p => p.OrganizationId == tenant.OrganizationId.Value)
+            .OrderByDescending(p => p.CreatedAt)
+            .Select(p => new SubscriptionPaymentDto(
+                p.Id, p.OrganizationId, p.Organization.Name, p.PlanId, p.Plan.Name,
+                p.Amount, p.Method.ToString(), p.Status.ToString(), p.ProofImagePath, p.Notes,
+                p.PeriodStart, p.PeriodEnd, p.CreatedAt, p.VerifiedAt))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<SubscriptionBillingInfoDto> GetBillingInfoAsync(CancellationToken cancellationToken = default)
+    {
+        var stored = await db.PlatformSettings.ToDictionaryAsync(s => s.Key, s => s.Value, cancellationToken);
+        string Get(string key) => stored.GetValueOrDefault(key) ?? PlatformSettingsKeys.Defaults[key];
+
+        return new SubscriptionBillingInfoDto(
+            Get(PlatformSettingsKeys.BillingBankName),
+            Get(PlatformSettingsKeys.BillingBankAccount),
+            Get(PlatformSettingsKeys.BillingBankInstructions),
+            Get(PlatformSettingsKeys.BillingContactEmail));
+    }
+
     private async Task<SubscriptionDto> MapAsync(Subscription sub, CancellationToken ct)
     {
-        var plan = await db.Plans.FindAsync([sub.PlanId], ct) ?? throw new InvalidOperationException();
+        var plan = sub.Plan ?? await db.Plans.FindAsync([sub.PlanId], ct) ?? throw new InvalidOperationException();
         var orgId = sub.OrganizationId;
         var org = await db.Organizations.FindAsync([orgId], ct) ?? throw new InvalidOperationException();
         var storeCount = await db.Stores.CountAsync(s => s.OrganizationId == orgId, ct);
         var userCount = await userManager.Users.CountAsync(u => u.OrganizationId == orgId, ct);
 
-        return new SubscriptionDto(
-            sub.Id, plan.Id, plan.Name, plan.Slug, plan.PriceMonthly, plan.PriceYearly,
-            sub.Status.ToString(), sub.CurrentPeriodStart, sub.CurrentPeriodEnd, sub.TrialEndsAt,
-            plan.MaxStores, plan.MaxUsers, plan.MaxProducts, plan.MaxMonthlyOrders,
-            plan.HasKitchen, plan.HasDelivery, plan.HasAccounting, plan.HasAdvancedReports, plan.HasApi,
-            storeCount, userCount, org.IsReadOnly);
+        return SubscriptionDtoMapper.ToDto(sub, plan, org, storeCount, userCount);
     }
 }

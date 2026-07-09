@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, type OrganizationDto } from '@pos/api-client';
+import { api, BUSINESS_TYPE_OPTIONS, type BusinessType } from '@pos/api-client';
 import { useAuth } from '@/auth';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -10,11 +10,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 export function SettingsPage() {
-  const { isOrgAdmin } = useAuth();
+  const { isOrgAdmin, refreshProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
     name: '', defaultTaxRate: '0.08', currency: 'USD',
     receiptHeader: '', receiptFooter: '', paymentQrPayload: '', paymentInstructions: '',
+    businessType: 'Hybrid' as BusinessType,
   });
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export function SettingsPage() {
         receiptFooter: org.receiptFooter ?? '',
         paymentQrPayload: org.paymentQrPayload ?? '',
         paymentInstructions: org.paymentInstructions ?? '',
+        businessType: org.businessType ?? 'Hybrid',
       });
       setLoading(false);
     });
@@ -43,7 +45,9 @@ export function SettingsPage() {
         receiptFooter: form.receiptFooter || undefined,
         paymentQrPayload: form.paymentQrPayload || undefined,
         paymentInstructions: form.paymentInstructions || undefined,
+        businessType: form.businessType,
       });
+      await refreshProfile();
       toast.success('Settings saved');
     } catch {
       toast.error('Failed to save settings');
@@ -63,7 +67,35 @@ export function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Organization Settings" description="Tax, currency, and receipt branding" />
+      <PageHeader title="Organization Settings" description="Industry mode, tax, currency, and receipt branding" />
+      <Card className="max-w-2xl">
+        <CardHeader><CardTitle>Industry</CardTitle></CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label>Business type</Label>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {BUSINESS_TYPE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, businessType: option.value })}
+                  className={`rounded-lg border p-3 text-left text-sm transition-colors ${
+                    form.businessType === option.value
+                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                      : 'border-border hover:bg-muted/50'
+                  }`}
+                >
+                  <span className="font-medium">{option.label}</span>
+                  <p className="mt-1 text-xs text-muted-foreground">{option.description}</p>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Controls which catalog steps and POS features appear. You can switch later — existing products are kept.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
       <Card className="max-w-2xl">
         <CardHeader><CardTitle>General</CardTitle></CardHeader>
         <CardContent className="flex flex-col gap-4">

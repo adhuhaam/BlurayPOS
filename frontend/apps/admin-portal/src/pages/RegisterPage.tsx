@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { StoreIcon } from 'lucide-react';
+import { StoreIcon, UtensilsCrossedIcon, ShoppingBagIcon } from 'lucide-react';
 import { useAuth } from '@/auth';
-import { ApiError } from '@pos/api-client';
+import { ApiError, REGISTRATION_BUSINESS_TYPE_OPTIONS, type BusinessType } from '@pos/api-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ export function RegisterPage() {
     email: '',
     password: '',
     phone: '',
+    businessType: '' as BusinessType | '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,6 +28,10 @@ export function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!form.businessType) {
+      setError('Please choose whether you run a restaurant or a retail shop');
+      return;
+    }
     setLoading(true);
     try {
       await register({
@@ -38,6 +43,7 @@ export function RegisterPage() {
         phone: form.phone || undefined,
         currency: 'MVR',
         timezone: 'Indian/Maldives',
+        businessType: form.businessType as BusinessType,
       });
       navigate('/');
     } catch (err) {
@@ -65,6 +71,32 @@ export function RegisterPage() {
             <div className="flex flex-col gap-2">
               <Label htmlFor="businessName">Business name</Label>
               <Input id="businessName" value={form.businessName} onChange={(e) => setForm({ ...form, businessName: e.target.value })} required />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>What kind of store is this?</Label>
+              <p className="text-xs text-muted-foreground">
+                We tailor your Office and POS — retail shops won&apos;t see recipes or ingredients.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {REGISTRATION_BUSINESS_TYPE_OPTIONS.map((option) => {
+                  const Icon = option.value === 'Restaurant' ? UtensilsCrossedIcon : ShoppingBagIcon;
+                  const selected = form.businessType === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, businessType: option.value })}
+                      className={`flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors ${
+                        selected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:bg-muted/50'
+                      }`}
+                    >
+                      <Icon className={`size-5 ${selected ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <span className="text-sm font-medium">{option.label}</span>
+                      <span className="text-xs text-muted-foreground leading-snug">{option.description}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">

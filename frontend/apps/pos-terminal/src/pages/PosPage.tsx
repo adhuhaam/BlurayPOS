@@ -22,7 +22,9 @@ interface CartItem {
 }
 
 export function PosPage() {
-  const { store, storeId, logout } = usePos();
+  const { store, storeId, logout, tenantFeatures } = usePos();
+  const retailMode = tenantFeatures?.posBarcodeRetail && !tenantFeatures?.posTables;
+  const restaurantMode = tenantFeatures?.posTables && !tenantFeatures?.posBarcodeRetail;
   const canViewOrders = usePosPermission('Order.View');
   const navigate = useNavigate();
   const online = useOnlineStatus();
@@ -42,6 +44,10 @@ export function PosPage() {
   const [loading, setLoading] = useState(false);
   const [receipt, setReceipt] = useState<OrderDto | null>(null);
   const [barcode, setBarcode] = useState('');
+
+  useEffect(() => {
+    if (retailMode) barcodeRef.current?.focus();
+  }, [retailMode]);
 
   useEffect(() => {
     if (online) api.getOrganization().then(setOrg).catch(() => {});
@@ -204,11 +210,16 @@ export function PosPage() {
       <header className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
           <h1 className="text-xl font-bold text-text">{store?.name}</h1>
-          <p className="text-sm text-text-muted">POS Terminal</p>
+          <p className="text-sm text-text-muted">
+            {retailMode ? 'Retail — scan barcode to sell' : restaurantMode ? 'Restaurant — tap items to add' : 'POS Terminal'}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <StatusBar />
           <ThemeToggle />
+          {tenantFeatures?.posTables && (
+            <Button variant="secondary" size="sm" onClick={() => navigate('/tables')}>Tables</Button>
+          )}
           {canViewOrders && (
             <Button variant="secondary" size="sm" onClick={() => navigate('/orders')}>Orders</Button>
           )}
@@ -219,21 +230,34 @@ export function PosPage() {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 flex-col overflow-hidden p-4">
-          <div className="mb-3 flex gap-2">
-            <Input
-              placeholder="Search products..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="flex-1"
-            />
-            <form onSubmit={handleBarcode} className="flex-1">
+          <div className={`mb-3 flex gap-2 ${retailMode ? 'flex-col sm:flex-row' : ''}`}>
+            {!retailMode && (
               <Input
-                ref={barcodeRef}
-                placeholder="Scan barcode..."
-                value={barcode}
-                onChange={(e) => setBarcode(e.target.value)}
+                placeholder="Search products..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="flex-1"
               />
-            </form>
+            )}
+            {(tenantFeatures?.posBarcodeRetail ?? true) && (
+              <form onSubmit={handleBarcode} className={retailMode ? 'w-full' : 'flex-1'}>
+                <Input
+                  ref={barcodeRef}
+                  placeholder={retailMode ? 'Scan barcode to add item…' : 'Scan barcode...'}
+                  value={barcode}
+                  onChange={(e) => setBarcode(e.target.value)}
+                  className={retailMode ? 'text-lg' : undefined}
+                  autoFocus={retailMode}
+                />
+              </form>
+            )}
+            {retailMode && (
+              <Input
+                placeholder="Search by name or SKU..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            )}
           </div>
           <div className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {products.filter((p) => p.isActive).map((p) => (

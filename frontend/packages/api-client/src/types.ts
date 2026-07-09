@@ -38,6 +38,24 @@ export interface RegisterRequest {
   phone?: string;
   currency?: string;
   timezone?: string;
+  businessType?: BusinessType;
+}
+
+export type BusinessType = 'Restaurant' | 'Retail' | 'Hybrid';
+
+export interface TenantFeaturesDto {
+  businessType: BusinessType;
+  catalogIngredients: boolean;
+  catalogRecipes: boolean;
+  catalogInventory: boolean;
+  posBarcodeRetail: boolean;
+  posTables: boolean;
+  posKitchen: boolean;
+  posDelivery: boolean;
+  onlineMenu: boolean;
+  onlineOrdering: boolean;
+  officeCoupons: boolean;
+  officeHr: boolean;
 }
 
 export interface UserDto {
@@ -91,6 +109,16 @@ export interface StoreDto {
   address: string | null;
   phone: string | null;
   isActive: boolean;
+  onlineMenuEnabled?: boolean;
+  onlineOrderingEnabled?: boolean;
+  allowPickup?: boolean;
+  allowDelivery?: boolean;
+  allowDineIn?: boolean;
+  allowCashOnDelivery?: boolean;
+  allowBankTransfer?: boolean;
+  minOrderAmount?: number;
+  deliveryFeeFlat?: number;
+  onlineMenuWelcomeText?: string | null;
 }
 
 export interface OrganizationDto {
@@ -103,6 +131,7 @@ export interface OrganizationDto {
   receiptFooter: string | null;
   paymentQrPayload: string | null;
   paymentInstructions: string | null;
+  businessType: BusinessType;
 }
 
 export interface MeResponse {
@@ -110,6 +139,9 @@ export interface MeResponse {
   roles: string[];
   permissions: string[];
   subscription: SubscriptionDto | null;
+  businessType: BusinessType | null;
+  tenantFeatures: TenantFeaturesDto | null;
+  organizationSlug: string | null;
 }
 
 export interface RolePermissionsDto {
@@ -138,8 +170,37 @@ export interface PlanDto {
   hasAdvancedReports: boolean;
   hasApi: boolean;
   hasPurchases: boolean;
+  hasOnlineMenu: boolean;
+  hasOnlineOrdering: boolean;
+  hasCoupons: boolean;
+  hasHr: boolean;
   sortOrder: number;
   isActive: boolean;
+}
+
+export interface PublicCustomerDto {
+  storeId: string;
+  storeName: string;
+  address: string | null;
+  organizationId: string;
+  organizationName: string;
+  planName: string;
+  planSlug: string;
+  currency: string;
+  memberSince: string;
+}
+
+export interface PublicMarketingStatsDto {
+  organizationCount: number;
+  storeCount: number;
+  proCount: number;
+  freeCount: number;
+}
+
+export interface PublicMarketingDto {
+  plans: PlanDto[];
+  customers: PublicCustomerDto[];
+  stats: PublicMarketingStatsDto;
 }
 
 export interface PlanAdminDto extends PlanDto {
@@ -164,6 +225,10 @@ export interface UpsertPlanRequest {
   hasAdvancedReports: boolean;
   hasApi: boolean;
   hasPurchases: boolean;
+  hasOnlineMenu: boolean;
+  hasOnlineOrdering: boolean;
+  hasCoupons: boolean;
+  hasHr: boolean;
   sortOrder: number;
   isActive: boolean;
 }
@@ -183,14 +248,30 @@ export interface SubscriptionDto {
   maxUsers: number;
   maxProducts: number;
   maxMonthlyOrders: number;
+  hasInventory: boolean;
   hasKitchen: boolean;
   hasDelivery: boolean;
   hasAccounting: boolean;
   hasAdvancedReports: boolean;
   hasApi: boolean;
+  hasOnlineMenu: boolean;
+  hasOnlineOrdering: boolean;
+  hasCoupons: boolean;
+  hasHr: boolean;
   storeCount: number;
   userCount: number;
   isReadOnly: boolean;
+  daysRemaining: number;
+  isExpired: boolean;
+  renewalDue: boolean;
+  graceEndsAt: string | null;
+}
+
+export interface SubscriptionBillingInfoDto {
+  billingBankName: string;
+  billingBankAccount: string;
+  billingBankInstructions: string;
+  billingContactEmail: string;
 }
 
 export interface OrganizationListItemDto {
@@ -205,6 +286,8 @@ export interface OrganizationListItemDto {
   storeCount: number;
   userCount: number;
   createdAt: string;
+  currentPeriodEnd: string | null;
+  daysRemaining: number | null;
 }
 
 export interface OrganizationDetailDto {
@@ -271,6 +354,7 @@ export interface UpdateOrganizationRequest {
   receiptFooter?: string;
   paymentQrPayload?: string;
   paymentInstructions?: string;
+  businessType?: BusinessType;
 }
 
 export interface ChangePlanRequest {
@@ -300,6 +384,62 @@ export interface SubscriptionPaymentDto {
   periodEnd: string;
   createdAt: string;
   verifiedAt: string | null;
+}
+
+export interface PlatformRevenueSummaryDto {
+  todayRevenue: number;
+  weekRevenue: number;
+  monthRevenue: number;
+  yearRevenue: number;
+  allTimeRevenue: number;
+  pendingRevenue: number;
+  pendingPaymentCount: number;
+  verifiedPaymentCount: number;
+}
+
+export interface PlanRevenueDto {
+  planId: string;
+  planName: string;
+  planSlug: string;
+  subscriberCount: number;
+  verifiedRevenue: number;
+  paymentCount: number;
+}
+
+export interface TenantSalesSummaryDto {
+  todaySales: number;
+  todayOrders: number;
+  weekSales: number;
+  weekOrders: number;
+  monthSales: number;
+  monthOrders: number;
+  yearSales: number;
+  yearOrders: number;
+}
+
+export interface TenantSalesByOrgDto {
+  organizationId: string;
+  organizationName: string;
+  planName: string;
+  totalSales: number;
+  orderCount: number;
+}
+
+export interface MonthlyPlatformTrendDto {
+  year: number;
+  month: number;
+  subscriptionRevenue: number;
+  tenantSales: number;
+  tenantOrderCount: number;
+}
+
+export interface PlatformReportsDto {
+  revenue: PlatformRevenueSummaryDto;
+  revenueByPlan: PlanRevenueDto[];
+  tenantSales: TenantSalesSummaryDto;
+  salesByOrganization: TenantSalesByOrgDto[];
+  monthlyTrend: MonthlyPlatformTrendDto[];
+  recentPayments: SubscriptionPaymentDto[];
 }
 
 export interface PlatformSettingsDto {
@@ -380,6 +520,9 @@ export interface ProductDto {
   categoryName: string | null;
   storePrice: number | null;
   stockOnHand: number | null;
+  isOnlineVisible?: boolean;
+  onlineDescription?: string | null;
+  imageUrl?: string | null;
 }
 
 export interface CreateProductRequest {
@@ -405,6 +548,9 @@ export interface UpdateProductRequest {
   isActive: boolean;
   trackInventory: boolean;
   inventoryMode: string;
+  isOnlineVisible?: boolean;
+  onlineDescription?: string;
+  imageUrl?: string;
 }
 
 export interface InventoryItemDto {
@@ -476,6 +622,16 @@ export interface OrderDto {
   completedAt: string | null;
   lines: OrderLineDto[];
   payments: PaymentDto[];
+  orderSource?: string | null;
+  serviceType?: string | null;
+  publicTrackingToken?: string | null;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  deliveryAddress?: string | null;
+  deliveryNotes?: string | null;
+  rejectedReason?: string | null;
+  diningTableName?: string | null;
+  onlinePaymentMethod?: string | null;
 }
 
 export interface CreateOrderLineRequest {
@@ -718,6 +874,16 @@ export interface UpdateStoreRequest {
   address?: string;
   phone?: string;
   isActive: boolean;
+  onlineMenuEnabled?: boolean;
+  onlineOrderingEnabled?: boolean;
+  allowPickup?: boolean;
+  allowDelivery?: boolean;
+  allowDineIn?: boolean;
+  allowCashOnDelivery?: boolean;
+  allowBankTransfer?: boolean;
+  minOrderAmount?: number;
+  deliveryFeeFlat?: number;
+  onlineMenuWelcomeText?: string;
 }
 
 export interface CreateUserRequest {
@@ -737,4 +903,538 @@ export interface UpdateUserRequest {
   defaultStoreId?: string;
   isActive: boolean;
   newPassword?: string;
+}
+
+export interface PublicStoreProfileDto {
+  slug: string;
+  organizationName: string;
+  businessType: string;
+  currency: string;
+  defaultTaxRate: number;
+  paymentQrPayload: string | null;
+  paymentInstructions: string | null;
+  onlineMenuEnabled: boolean;
+  onlineOrderingEnabled: boolean;
+  allowPickup: boolean;
+  allowDelivery: boolean;
+  allowDineIn: boolean;
+  allowCashOnDelivery: boolean;
+  allowBankTransfer: boolean;
+  minOrderAmount: number;
+  deliveryFeeFlat: number;
+  onlineMenuWelcomeText: string | null;
+  branches: { id: string; name: string; address: string | null; phone: string | null }[];
+}
+
+export interface PublicMenuCategoryDto {
+  id: string;
+  name: string;
+  sortOrder: number;
+  products: PublicMenuProductDto[];
+}
+
+export interface PublicMenuProductDto {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  taxRate: number;
+  imageUrl: string | null;
+  categoryName: string | null;
+}
+
+export interface PublicTableDto {
+  storeSlug: string;
+  tableName: string;
+  tableId: string;
+  areaName: string | null;
+}
+
+export interface PublicPlaceOrderRequest {
+  storeId: string;
+  lines: CreateOrderLineRequest[];
+  serviceType: string;
+  paymentMethod: string;
+  customerName: string;
+  customerPhone: string;
+  deliveryAddress?: string;
+  deliveryNotes?: string;
+  notes?: string;
+  slipImagePath?: string;
+  diningTableId?: string;
+}
+
+export interface PublicPlaceOrderResponse {
+  trackingToken: string;
+  orderNumber: string;
+  total: number;
+  status: string;
+  message: string;
+}
+
+export interface PublicOrderTrackDto {
+  orderNumber: string;
+  status: string;
+  statusLabel: string | null;
+  total: number;
+  currency: string;
+  customerName: string | null;
+  serviceType: string | null;
+  paymentMethod: string | null;
+  paymentStatus: string | null;
+  rejectedReason: string | null;
+  createdAt: string;
+  lines: OrderLineDto[];
+}
+
+export interface DiningAreaDto {
+  id: string;
+  name: string;
+  sortOrder: number;
+  tableCount: number;
+}
+
+export interface CreateDiningAreaRequest {
+  name: string;
+  sortOrder?: number;
+}
+
+export interface DiningTableDto {
+  id: string;
+  name: string;
+  code: string | null;
+  capacity: number;
+  diningAreaId: string | null;
+  areaName: string | null;
+  status: string;
+  activeOrderId: string | null;
+  activeOrderNumber: string | null;
+  activeOrderTotal: number | null;
+  sentToKitchen: boolean;
+  billRequested: boolean;
+  qrToken?: string | null;
+}
+
+export interface CreateDiningTableRequest {
+  name: string;
+  code?: string;
+  capacity: number;
+  diningAreaId?: string;
+  sortOrder?: number;
+}
+
+// Coupons & lucky draw module
+export type CouponCampaignType = 'LuckyDraw' | 'DiscountCoupon' | 'FreeProduct' | 'CashGift';
+
+export interface CouponCampaignDto {
+  id: string;
+  name: string;
+  description: string | null;
+  campaignType: string;
+  status: string;
+  rewardTitle: string;
+  rewardValue: number | null;
+  rewardValueType: string;
+  productId: string | null;
+  productName: string | null;
+  storeId: string | null;
+  storeName: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  contactUrl: string | null;
+  totalCodes: number;
+  totalScans: number;
+  totalEntries: number;
+  createdAt: string;
+}
+
+export interface CouponCampaignDetailDto extends CouponCampaignDto {
+  totalWinners: number;
+  batches: CouponBatchDto[];
+}
+
+export interface CreateCouponCampaignRequest {
+  name: string;
+  description?: string;
+  campaignType: string;
+  rewardTitle: string;
+  rewardValue?: number;
+  rewardValueType?: string;
+  productId?: string;
+  storeId?: string;
+  startsAt?: string;
+  endsAt?: string;
+  contactUrl?: string;
+}
+
+export interface UpdateCouponCampaignRequest extends CreateCouponCampaignRequest {
+  status: string;
+}
+
+export interface CouponBatchDto {
+  id: string;
+  campaignId: string;
+  name: string;
+  prefix: string;
+  quantity: number;
+  locationHint: string | null;
+  storeId: string | null;
+  codesGenerated: number;
+  createdAt: string;
+}
+
+export interface CreateCouponBatchRequest {
+  name: string;
+  prefix?: string;
+  quantity: number;
+  locationHint?: string;
+  storeId?: string;
+}
+
+export interface CouponPrintItemDto {
+  id: string;
+  internalCode: string;
+  displayCode: string;
+  qrImageUrl: string;
+  expiresAt: string | null;
+}
+
+export interface CouponBatchPrintDto {
+  batchId: string;
+  campaignName: string;
+  organizationName: string;
+  rewardTitle: string;
+  locationHint: string | null;
+  items: CouponPrintItemDto[];
+}
+
+export interface CouponEntryDto {
+  id: string;
+  campaignId: string;
+  couponCodeId: string;
+  displayCode: string;
+  name: string;
+  phone: string;
+  createdAt: string;
+}
+
+export interface CouponDashboardDto {
+  totalCampaigns: number;
+  activeCampaigns: number;
+  totalCodes: number;
+  totalScans: number;
+  totalEntries: number;
+  todayScans: number;
+  todayEntries: number;
+  recentCampaigns: CouponCampaignDto[];
+}
+
+export interface PublicCouponScanDto {
+  displayCode: string;
+  organizationName: string;
+  campaignName: string;
+  campaignType: string;
+  rewardTitle: string;
+  rewardValue: number | null;
+  rewardValueType: string;
+  contactUrl: string | null;
+  alreadyEntered: boolean;
+  existingEntryName: string | null;
+}
+
+export interface PublicCouponEnterRequest {
+  name: string;
+  phone: string;
+  consent: boolean;
+  honeypot?: string;
+}
+
+export interface PublicCouponEnterResponse {
+  displayCode: string;
+  message: string;
+  campaignType: string;
+}
+
+export interface CouponCodeDto {
+  id: string;
+  campaignId: string;
+  batchId: string | null;
+  internalCode: string;
+  displayCode: string;
+  status: string;
+  scanCount: number;
+  usedCount: number;
+  maxUses: number;
+  expiresAt: string | null;
+  claimedAt: string | null;
+  entryName: string | null;
+  entryPhone: string | null;
+}
+
+export interface CampaignWinnerDto {
+  id: string;
+  campaignId: string;
+  couponCodeId: string;
+  displayCode: string;
+  entryId: string | null;
+  entryName: string | null;
+  entryPhone: string | null;
+  announcedAt: string | null;
+  notes: string | null;
+}
+
+export interface AssignCampaignWinnerRequest {
+  campaignId: string;
+  couponCodeId: string;
+  entryId?: string;
+  notes?: string;
+}
+
+// HR Module
+export interface EmployeeDto {
+  id: string;
+  employeeNumber: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  nationality: string | null;
+  idDocumentType: string | null;
+  idDocumentNumber: string | null;
+  idDocumentFilePath: string | null;
+  dateOfBirth: string | null;
+  hireDate: string | null;
+  terminationDate: string | null;
+  jobTitle: string | null;
+  department: string | null;
+  employmentStatus: string;
+  defaultStoreId: string | null;
+  defaultStoreName: string | null;
+  userId: string | null;
+  createdAt: string;
+}
+
+export interface EmployeeListItemDto {
+  id: string;
+  employeeNumber: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  jobTitle: string | null;
+  department: string | null;
+  employmentStatus: string;
+  defaultStoreId: string | null;
+  defaultStoreName: string | null;
+  userId: string | null;
+}
+
+export interface CreateEmployeeRequest {
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  nationality?: string;
+  idDocumentType?: string;
+  idDocumentNumber?: string;
+  dateOfBirth?: string;
+  hireDate?: string;
+  jobTitle?: string;
+  department?: string;
+  defaultStoreId?: string;
+}
+
+export interface UpdateEmployeeRequest extends Omit<CreateEmployeeRequest, never> {
+  terminationDate?: string;
+  employmentStatus: string;
+}
+
+export interface EmployeeCompensationDto {
+  id: string;
+  employeeId: string;
+  basicSalary: number;
+  currency: string;
+  payFrequency: string;
+  bankName: string | null;
+  bankAccountNumber: string | null;
+  effectiveFrom: string;
+}
+
+export interface UpsertEmployeeCompensationRequest {
+  basicSalary: number;
+  currency: string;
+  payFrequency: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  effectiveFrom: string;
+}
+
+export interface PayrollAdjustmentDto {
+  id: string;
+  employeeId: string;
+  type: string;
+  label: string;
+  amount: number;
+  percent: number | null;
+  isRecurring: boolean;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+}
+
+export interface UpsertPayrollAdjustmentRequest {
+  type: string;
+  label: string;
+  amount: number;
+  percent?: number;
+  isRecurring: boolean;
+  effectiveFrom: string;
+  effectiveTo?: string;
+}
+
+export interface PayrollRunDto {
+  id: string;
+  periodStart: string;
+  periodEnd: string;
+  status: string;
+  finalizedAt: string | null;
+  paySlipCount: number;
+  createdAt: string;
+}
+
+export interface CreatePayrollRunRequest {
+  periodStart: string;
+  periodEnd: string;
+}
+
+export interface PaySlipLineDto {
+  id: string;
+  lineType: string;
+  label: string;
+  amount: number;
+}
+
+export interface PaySlipDto {
+  id: string;
+  payrollRunId: string;
+  periodStart: string;
+  periodEnd: string;
+  employeeId: string;
+  employeeName: string;
+  employeeNumber: string;
+  grossPay: number;
+  totalDeductions: number;
+  netPay: number;
+  notes: string | null;
+  lines: PaySlipLineDto[];
+}
+
+export interface AttendanceRecordDto {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  storeId: string;
+  storeName: string;
+  clockInAt: string;
+  clockOutAt: string | null;
+  source: string;
+  notes: string | null;
+}
+
+export interface ClockInRequest { employeeId: string; storeId: string; notes?: string; }
+export interface ClockOutRequest { employeeId: string; notes?: string; }
+export interface ManualAttendanceRequest {
+  employeeId: string;
+  storeId: string;
+  clockInAt: string;
+  clockOutAt?: string;
+  notes?: string;
+}
+
+export interface LeaveTypeDto {
+  id: string;
+  name: string;
+  isPaid: boolean;
+  defaultDaysPerYear: number;
+}
+
+export interface UpsertLeaveTypeRequest {
+  name: string;
+  isPaid: boolean;
+  defaultDaysPerYear: number;
+}
+
+export interface LeaveBalanceDto {
+  id: string;
+  employeeId: string;
+  leaveTypeId: string;
+  leaveTypeName: string;
+  year: number;
+  entitledDays: number;
+  usedDays: number;
+  remainingDays: number;
+}
+
+export interface LeaveRequestDto {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  leaveTypeId: string;
+  leaveTypeName: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  reason: string | null;
+  reviewedAt: string | null;
+  daysRequested: number;
+}
+
+export interface CreateLeaveRequestRequest {
+  employeeId: string;
+  leaveTypeId: string;
+  startDate: string;
+  endDate: string;
+  reason?: string;
+}
+
+export interface WorkScheduleDto {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  storeId: string;
+  storeName: string;
+}
+
+export interface UpsertWorkScheduleItemRequest {
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  storeId: string;
+}
+
+export interface PerformanceReviewDto {
+  id: string;
+  employeeId: string;
+  reviewPeriod: string;
+  rating: number;
+  summary: string | null;
+  reviewedByUserId: string;
+  reviewedAt: string;
+}
+
+export interface CreatePerformanceReviewRequest {
+  reviewPeriod: string;
+  rating: number;
+  summary?: string;
+}
+
+export interface HrDashboardDto {
+  totalEmployees: number;
+  activeEmployees: number;
+  pendingLeaveRequests: number;
+  openPayrollRuns: number;
+  recentLeaveRequests: LeaveRequestDto[];
 }

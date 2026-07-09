@@ -34,4 +34,12 @@ public class SubscriptionController(IMediator mediator) : ApiControllerBase(medi
     [HttpPost("payments")]
     public async Task<ActionResult<ApiResponse<SubscriptionPaymentDto>>> SubmitPayment([FromBody] SubmitSubscriptionPaymentRequest request) =>
         OkResponse(await Mediator.Send(new SubmitSubscriptionPaymentCommand(request)));
+
+    [HttpGet("payments")]
+    public async Task<ActionResult<ApiResponse<IList<SubscriptionPaymentDto>>>> ListPayments() =>
+        OkResponse(await Mediator.Send(new ListMySubscriptionPaymentsQuery()));
+
+    [HttpGet("billing-info")]
+    public async Task<ActionResult<ApiResponse<SubscriptionBillingInfoDto>>> GetBillingInfo() =>
+        OkResponse(await Mediator.Send(new GetSubscriptionBillingInfoQuery()));
 }

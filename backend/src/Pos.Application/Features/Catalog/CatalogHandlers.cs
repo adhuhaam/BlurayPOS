@@ -123,7 +123,7 @@ public class GetProductsQueryHandler(IPosDbContext db) : IRequestHandler<GetProd
                     .FirstOrDefaultAsync(cancellationToken);
             }
 
-            items.Add(new ProductDto(p.Id, p.CategoryId, p.Name, p.Sku, p.Barcode, p.Description, p.BasePrice, p.TaxRate, p.IsActive, p.TrackInventory, p.InventoryMode.ToString(), p.Category?.Name, storePrice, stock));
+            items.Add(new ProductDto(p.Id, p.CategoryId, p.Name, p.Sku, p.Barcode, p.Description, p.BasePrice, p.TaxRate, p.IsActive, p.TrackInventory, p.InventoryMode.ToString(), p.Category?.Name, storePrice, stock, p.IsOnlineVisible, p.OnlineDescription, p.ImageUrl));
         }
 
         return new PagedResult<ProductDto> { Items = items, TotalCount = total, Page = request.Page, PageSize = request.PageSize };
@@ -188,10 +188,13 @@ public class UpdateProductCommandHandler(IPosDbContext db, IAuditService audit) 
         product.TrackInventory = command.Request.TrackInventory;
         product.InventoryMode = Enum.TryParse<ProductInventoryMode>(command.Request.InventoryMode, true, out var mode)
             ? mode : product.InventoryMode;
+        if (command.Request.IsOnlineVisible.HasValue) product.IsOnlineVisible = command.Request.IsOnlineVisible.Value;
+        if (command.Request.OnlineDescription != null) product.OnlineDescription = command.Request.OnlineDescription;
+        if (command.Request.ImageUrl != null) product.ImageUrl = command.Request.ImageUrl;
         await db.SaveChangesAsync(cancellationToken);
         await audit.LogAsync("Product", product.Id, "Updated", cancellationToken: cancellationToken);
 
-        return new ProductDto(product.Id, product.CategoryId, product.Name, product.Sku, product.Barcode, product.Description, product.BasePrice, product.TaxRate, product.IsActive, product.TrackInventory, product.InventoryMode.ToString(), product.Category?.Name, null, null);
+        return new ProductDto(product.Id, product.CategoryId, product.Name, product.Sku, product.Barcode, product.Description, product.BasePrice, product.TaxRate, product.IsActive, product.TrackInventory, product.InventoryMode.ToString(), product.Category?.Name, null, null, product.IsOnlineVisible, product.OnlineDescription, product.ImageUrl);
     }
 }
 
@@ -210,6 +213,6 @@ public class GetProductByIdQueryHandler(IPosDbContext db) : IRequestHandler<GetP
             stock = await db.InventoryItems.Where(i => i.StoreId == request.StoreId && i.ProductId == product.Id).Select(i => (int?)i.QuantityOnHand).FirstOrDefaultAsync(cancellationToken);
         }
 
-        return new ProductDto(product.Id, product.CategoryId, product.Name, product.Sku, product.Barcode, product.Description, product.BasePrice, product.TaxRate, product.IsActive, product.TrackInventory, product.InventoryMode.ToString(), product.Category?.Name, storePrice, stock);
+        return new ProductDto(product.Id, product.CategoryId, product.Name, product.Sku, product.Barcode, product.Description, product.BasePrice, product.TaxRate, product.IsActive, product.TrackInventory, product.InventoryMode.ToString(), product.Category?.Name, storePrice, stock, product.IsOnlineVisible, product.OnlineDescription, product.ImageUrl);
     }
 }

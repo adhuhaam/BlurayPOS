@@ -80,6 +80,10 @@ public class PlatformController(IMediator mediator) : ApiControllerBase(mediator
         return OkResponse<object>(null!);
     }
 
+    [HttpGet("reports")]
+    public async Task<ActionResult<ApiResponse<PlatformReportsDto>>> GetReports() =>
+        OkResponse(await Mediator.Send(new GetPlatformReportsQuery()));
+
     [HttpGet("users")]
     public async Task<ActionResult<ApiResponse<IList<PlatformUserListItemDto>>>> ListUsers(
         [FromQuery] Guid? organizationId,

@@ -12,7 +12,8 @@ public class StorageController(IWebHostEnvironment env) : ControllerBase
 
   [HttpPost("upload")]
   [RequestSizeLimit(MaxBytes)]
-  public async Task<ActionResult<object>> Upload(IFormFile file, CancellationToken cancellationToken)
+  [AllowAnonymous]
+  public async Task<ActionResult<object>> UploadPublic(IFormFile file, CancellationToken cancellationToken)
   {
     if (file.Length == 0 || file.Length > MaxBytes)
       return BadRequest(new { error = "Invalid file size." });

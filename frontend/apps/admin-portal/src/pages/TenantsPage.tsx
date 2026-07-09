@@ -208,6 +208,7 @@ export function TenantsPage() {
               <TableRow>
                 <TableHead>Store</TableHead>
                 <TableHead>Plan</TableHead>
+                <TableHead>Period</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Branches</TableHead>
                 <TableHead>Users</TableHead>
@@ -218,7 +219,7 @@ export function TenantsPage() {
             <TableBody>
               {stores.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
                     No stores yet
                   </TableCell>
                 </TableRow>
@@ -241,8 +242,21 @@ export function TenantsPage() {
                     />
                   </TableCell>
                   <TableCell>
+                    {s.currentPeriodEnd ? (
+                      <div className="text-sm">
+                        <div>{new Date(s.currentPeriodEnd).toLocaleDateString()}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {s.daysRemaining != null ? `${s.daysRemaining}d left` : '—'}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <div className="flex flex-wrap gap-1">
                       <Badge variant="secondary">{s.subscriptionStatus}</Badge>
+                      {s.subscriptionStatus === 'PastDue' && <Badge variant="destructive">Past due</Badge>}
                       {s.isSuspended && <Badge variant="destructive">Suspended</Badge>}
                       {s.isReadOnly && <Badge variant="outline">Read-only</Badge>}
                     </div>

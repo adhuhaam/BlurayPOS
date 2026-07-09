@@ -152,6 +152,51 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Pos.Domain.Entities.AttendanceRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ClockInAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ClockOutAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("StoreId");
+
+                    b.ToTable("AttendanceRecords");
+                });
+
             modelBuilder.Entity("Pos.Domain.Entities.AuditLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -195,6 +240,50 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.ToTable("AuditLogs");
                 });
 
+            modelBuilder.Entity("Pos.Domain.Entities.CampaignWinner", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AnnouncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CampaignId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CouponCodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("EntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId");
+
+                    b.HasIndex("CouponCodeId");
+
+                    b.HasIndex("EntryId");
+
+                    b.ToTable("CampaignWinners");
+                });
+
             modelBuilder.Entity("Pos.Domain.Entities.Category", b =>
                 {
                     b.Property<Guid>("Id")
@@ -228,6 +317,275 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.HasIndex("OrganizationId");
 
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.CouponBatch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CampaignId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LocationHint")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Prefix")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId");
+
+                    b.ToTable("CouponBatches");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.CouponCampaign", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CampaignType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ContactUrl")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("EndsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RewardTitle")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("RewardValue")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("RewardValueType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("StartsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("StoreId");
+
+                    b.ToTable("CouponCampaigns");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.CouponCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CampaignId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ClaimedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DisplayCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InternalCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MaxUses")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UsedCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("CampaignId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("OrganizationId", "DisplayCode")
+                        .IsUnique();
+
+                    b.HasIndex("OrganizationId", "InternalCode")
+                        .IsUnique();
+
+                    b.ToTable("CouponCodes");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.CouponEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CampaignId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Consent")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("CouponCodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("CouponCodeId", "Phone");
+
+                    b.ToTable("CouponEntries");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.CouponLookupEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CouponCodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Referrer")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserAgent")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CouponCodeId");
+
+                    b.ToTable("CouponLookupEvents");
                 });
 
             modelBuilder.Entity("Pos.Domain.Entities.Customer", b =>
@@ -266,6 +624,244 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Customers");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.DiningArea", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StoreId", "Name");
+
+                    b.ToTable("DiningAreas");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.DiningTable", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Code")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DiningAreaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("QrToken")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("StoreId1")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DiningAreaId");
+
+                    b.HasIndex("QrToken")
+                        .IsUnique();
+
+                    b.HasIndex("StoreId1");
+
+                    b.HasIndex("StoreId", "Code");
+
+                    b.ToTable("DiningTables");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.Employee", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DefaultStoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Department")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmployeeNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("EmploymentStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("HireDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IdDocumentFilePath")
+                        .HasColumnType("text");
+
+                    b.Property<string>("IdDocumentNumber")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("IdDocumentType")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("JobTitle")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Nationality")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("TerminationDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DefaultStoreId");
+
+                    b.HasIndex("OrganizationId", "EmployeeNumber")
+                        .IsUnique();
+
+                    b.HasIndex("OrganizationId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("Employees");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.EmployeeCompensation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BankAccountNumber")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BankName")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("BasicSalary")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("EffectiveFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("PayFrequency")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId")
+                        .IsUnique();
+
+                    b.ToTable("EmployeeCompensations");
                 });
 
             modelBuilder.Entity("Pos.Domain.Entities.IdempotencyRecord", b =>
@@ -407,11 +1003,141 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.ToTable("InventoryItems");
                 });
 
+            modelBuilder.Entity("Pos.Domain.Entities.LeaveBalance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("EntitledDays")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("LeaveTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("UsedDays")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LeaveTypeId");
+
+                    b.HasIndex("EmployeeId", "LeaveTypeId", "Year")
+                        .IsUnique();
+
+                    b.ToTable("LeaveBalances");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.LeaveRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ApprovedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("LeaveTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("LeaveTypeId");
+
+                    b.ToTable("LeaveRequests");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.LeaveType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("DefaultDaysPerYear")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LeaveTypes");
+                });
+
             modelBuilder.Entity("Pos.Domain.Entities.Order", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("BillRequestedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("CashierUserId")
                         .HasColumnType("uuid");
@@ -423,6 +1149,21 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CustomerName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CustomerPhone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DeliveryAddress")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DeliveryNotes")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("DiningTableId")
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("DiscountAmount")
@@ -437,12 +1178,33 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("text");
 
+                    b.Property<int?>("OnlinePaymentMethod")
+                        .HasColumnType("integer");
+
                     b.Property<string>("OrderNumber")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("OrderSource")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("OrganizationId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("PublicTrackingToken")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RejectedReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ScheduledFor")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("SentToKitchenAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ServiceType")
+                        .HasColumnType("integer");
 
                     b.Property<Guid?>("ShiftId")
                         .HasColumnType("uuid");
@@ -469,7 +1231,12 @@ namespace Pos.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("CustomerId");
 
+                    b.HasIndex("DiningTableId");
+
                     b.HasIndex("IdempotencyKey");
+
+                    b.HasIndex("PublicTrackingToken")
+                        .IsUnique();
 
                     b.HasIndex("ShiftId");
 
@@ -549,6 +1316,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("BusinessEmail")
                         .HasColumnType("text");
+
+                    b.Property<int>("BusinessType")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -643,6 +1413,89 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.ToTable("OrganizationRolePermissions");
                 });
 
+            modelBuilder.Entity("Pos.Domain.Entities.PaySlip", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("GrossPay")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("NetPay")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PayrollRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TotalDeductions")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("PayrollRunId");
+
+                    b.ToTable("PaySlips");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.PaySlipLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("LineType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PaySlipId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PaySlipId");
+
+                    b.ToTable("PaySlipLines");
+                });
+
             modelBuilder.Entity("Pos.Domain.Entities.Payment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -687,6 +1540,138 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.HasIndex("OrderId");
 
                     b.ToTable("Payments");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.PayrollAdjustment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("EffectiveFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRecurring")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("Percent")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("PayrollAdjustments");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.PayrollRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("FinalizedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PeriodEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("PeriodStart")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PayrollRuns");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.PerformanceReview", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ReviewPeriod")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ReviewedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Summary")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("PerformanceReviews");
                 });
 
             modelBuilder.Entity("Pos.Domain.Entities.Permission", b =>
@@ -748,13 +1733,25 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<bool>("HasApi")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("HasCoupons")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("HasDelivery")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasHr")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("HasInventory")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("HasKitchen")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasOnlineMenu")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasOnlineOrdering")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("HasPurchases")
@@ -898,6 +1895,9 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
                     b.Property<int>("InventoryMode")
                         .HasColumnType("integer");
 
@@ -907,8 +1907,14 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsOnlineVisible")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OnlineDescription")
                         .HasColumnType("text");
 
                     b.Property<Guid>("OrganizationId")
@@ -1203,6 +2209,21 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<string>("Address")
                         .HasColumnType("text");
 
+                    b.Property<bool>("AllowBankTransfer")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AllowCashOnDelivery")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AllowDelivery")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AllowDineIn")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AllowPickup")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1210,15 +2231,30 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("DeliveryFeeFlat")
+                        .HasColumnType("numeric");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<decimal>("MinOrderAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("OnlineMenuEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("OnlineMenuWelcomeText")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("OnlineOrderingEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<Guid>("OrganizationId")
                         .HasColumnType("uuid");
@@ -1636,6 +2672,49 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.ToTable("Terminals");
                 });
 
+            modelBuilder.Entity("Pos.Domain.Entities.WorkSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StoreId");
+
+                    b.HasIndex("EmployeeId", "DayOfWeek")
+                        .IsUnique();
+
+                    b.ToTable("WorkSchedules");
+                });
+
             modelBuilder.Entity("Pos.Infrastructure.Identity.ApplicationUser", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1788,6 +2867,51 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Pos.Domain.Entities.AttendanceRecord", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.Employee", "Employee")
+                        .WithMany("AttendanceRecords")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Store");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.CampaignWinner", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.CouponCampaign", "Campaign")
+                        .WithMany()
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Entities.CouponCode", "CouponCode")
+                        .WithMany()
+                        .HasForeignKey("CouponCodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Entities.CouponEntry", "Entry")
+                        .WithMany()
+                        .HasForeignKey("EntryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Campaign");
+
+                    b.Navigation("CouponCode");
+
+                    b.Navigation("Entry");
+                });
+
             modelBuilder.Entity("Pos.Domain.Entities.Category", b =>
                 {
                     b.HasOne("Pos.Domain.Entities.Organization", "Organization")
@@ -1797,6 +2921,147 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.CouponBatch", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.CouponCampaign", "Campaign")
+                        .WithMany("Batches")
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Campaign");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.CouponCampaign", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Pos.Domain.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Store");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.CouponCode", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.CouponBatch", "Batch")
+                        .WithMany("Codes")
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Pos.Domain.Entities.CouponCampaign", "Campaign")
+                        .WithMany("Codes")
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
+                    b.Navigation("Batch");
+
+                    b.Navigation("Campaign");
+
+                    b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.CouponEntry", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.CouponCampaign", "Campaign")
+                        .WithMany("Entries")
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Entities.CouponCode", "CouponCode")
+                        .WithMany("Entries")
+                        .HasForeignKey("CouponCodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
+                    b.Navigation("Campaign");
+
+                    b.Navigation("CouponCode");
+
+                    b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.CouponLookupEvent", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.CouponCode", "CouponCode")
+                        .WithMany("LookupEvents")
+                        .HasForeignKey("CouponCodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CouponCode");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.DiningArea", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Store");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.DiningTable", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.DiningArea", "DiningArea")
+                        .WithMany("Tables")
+                        .HasForeignKey("DiningAreaId");
+
+                    b.HasOne("Pos.Domain.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Entities.Store", null)
+                        .WithMany("DiningTables")
+                        .HasForeignKey("StoreId1");
+
+                    b.Navigation("DiningArea");
+
+                    b.Navigation("Store");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.Employee", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.Store", "DefaultStore")
+                        .WithMany()
+                        .HasForeignKey("DefaultStoreId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("DefaultStore");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.EmployeeCompensation", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.Employee", "Employee")
+                        .WithOne("Compensation")
+                        .HasForeignKey("Pos.Domain.Entities.EmployeeCompensation", "EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("Pos.Domain.Entities.InventoryAdjustment", b =>
@@ -1843,11 +3108,53 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Navigation("Store");
                 });
 
+            modelBuilder.Entity("Pos.Domain.Entities.LeaveBalance", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.Employee", "Employee")
+                        .WithMany("LeaveBalances")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Entities.LeaveType", "LeaveType")
+                        .WithMany("Balances")
+                        .HasForeignKey("LeaveTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("LeaveType");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.LeaveRequest", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.Employee", "Employee")
+                        .WithMany("LeaveRequests")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Entities.LeaveType", "LeaveType")
+                        .WithMany("Requests")
+                        .HasForeignKey("LeaveTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("LeaveType");
+                });
+
             modelBuilder.Entity("Pos.Domain.Entities.Order", b =>
                 {
                     b.HasOne("Pos.Domain.Entities.Customer", "Customer")
                         .WithMany("Orders")
                         .HasForeignKey("CustomerId");
+
+                    b.HasOne("Pos.Domain.Entities.DiningTable", "DiningTable")
+                        .WithMany()
+                        .HasForeignKey("DiningTableId");
 
                     b.HasOne("Pos.Domain.Entities.Shift", "Shift")
                         .WithMany("Orders")
@@ -1860,6 +3167,8 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Customer");
+
+                    b.Navigation("DiningTable");
 
                     b.Navigation("Shift");
 
@@ -1904,6 +3213,36 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Navigation("Permission");
                 });
 
+            modelBuilder.Entity("Pos.Domain.Entities.PaySlip", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.Employee", "Employee")
+                        .WithMany("PaySlips")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Entities.PayrollRun", "PayrollRun")
+                        .WithMany("PaySlips")
+                        .HasForeignKey("PayrollRunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("PayrollRun");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.PaySlipLine", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.PaySlip", "PaySlip")
+                        .WithMany("Lines")
+                        .HasForeignKey("PaySlipId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PaySlip");
+                });
+
             modelBuilder.Entity("Pos.Domain.Entities.Payment", b =>
                 {
                     b.HasOne("Pos.Domain.Entities.Order", "Order")
@@ -1913,6 +3252,28 @@ namespace Pos.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.PayrollAdjustment", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.Employee", "Employee")
+                        .WithMany("Adjustments")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.PerformanceReview", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.Employee", "Employee")
+                        .WithMany("PerformanceReviews")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("Pos.Domain.Entities.Product", b =>
@@ -2161,6 +3522,25 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Navigation("Store");
                 });
 
+            modelBuilder.Entity("Pos.Domain.Entities.WorkSchedule", b =>
+                {
+                    b.HasOne("Pos.Domain.Entities.Employee", "Employee")
+                        .WithMany("WorkSchedules")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pos.Domain.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Store");
+                });
+
             modelBuilder.Entity("Pos.Infrastructure.Identity.UserStoreAssignment", b =>
                 {
                     b.HasOne("Pos.Infrastructure.Identity.ApplicationUser", "User")
@@ -2177,9 +3557,61 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Navigation("Products");
                 });
 
+            modelBuilder.Entity("Pos.Domain.Entities.CouponBatch", b =>
+                {
+                    b.Navigation("Codes");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.CouponCampaign", b =>
+                {
+                    b.Navigation("Batches");
+
+                    b.Navigation("Codes");
+
+                    b.Navigation("Entries");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.CouponCode", b =>
+                {
+                    b.Navigation("Entries");
+
+                    b.Navigation("LookupEvents");
+                });
+
             modelBuilder.Entity("Pos.Domain.Entities.Customer", b =>
                 {
                     b.Navigation("Orders");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.DiningArea", b =>
+                {
+                    b.Navigation("Tables");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.Employee", b =>
+                {
+                    b.Navigation("Adjustments");
+
+                    b.Navigation("AttendanceRecords");
+
+                    b.Navigation("Compensation");
+
+                    b.Navigation("LeaveBalances");
+
+                    b.Navigation("LeaveRequests");
+
+                    b.Navigation("PaySlips");
+
+                    b.Navigation("PerformanceReviews");
+
+                    b.Navigation("WorkSchedules");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.LeaveType", b =>
+                {
+                    b.Navigation("Balances");
+
+                    b.Navigation("Requests");
                 });
 
             modelBuilder.Entity("Pos.Domain.Entities.Order", b =>
@@ -2198,6 +3630,16 @@ namespace Pos.Infrastructure.Persistence.Migrations
                     b.Navigation("Stores");
 
                     b.Navigation("Subscription");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.PaySlip", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Pos.Domain.Entities.PayrollRun", b =>
+                {
+                    b.Navigation("PaySlips");
                 });
 
             modelBuilder.Entity("Pos.Domain.Entities.Permission", b =>
@@ -2224,6 +3666,8 @@ namespace Pos.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Pos.Domain.Entities.Store", b =>
                 {
+                    b.Navigation("DiningTables");
+
                     b.Navigation("InventoryItems");
 
                     b.Navigation("Orders");

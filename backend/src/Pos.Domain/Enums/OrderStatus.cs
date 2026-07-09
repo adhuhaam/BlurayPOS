@@ -6,7 +6,33 @@ public enum OrderStatus
     Completed = 1,
     Refunded = 2,
     Voided = 3,
-    Held = 4
+    Held = 4,
+    Submitted = 5,
+    Accepted = 6,
+    Ready = 7
+}
+
+public enum OrderSource
+{
+    Pos = 0,
+    Online = 1,
+    QrTable = 2
+}
+
+public enum ServiceType
+{
+    DineIn = 0,
+    Pickup = 1,
+    Delivery = 2
+}
+
+public enum DiningTableStatus
+{
+    Available = 0,
+    Occupied = 1,
+    BillRequested = 2,
+    Reserved = 3,
+    Cleaning = 4
 }
 
 public enum PaymentMethod

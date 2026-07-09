@@ -17,6 +17,8 @@ public interface IPosDbContext
     DbSet<InventoryItem> InventoryItems { get; }
     DbSet<InventoryAdjustment> InventoryAdjustments { get; }
     DbSet<StockTransfer> StockTransfers { get; }
+    DbSet<DiningArea> DiningAreas { get; }
+    DbSet<DiningTable> DiningTables { get; }
     DbSet<Order> Orders { get; }
     DbSet<OrderLine> OrderLines { get; }
     DbSet<Payment> Payments { get; }
@@ -34,5 +36,23 @@ public interface IPosDbContext
     DbSet<Permission> Permissions { get; }
     DbSet<RolePermission> RolePermissions { get; }
     DbSet<SubscriptionPayment> SubscriptionPayments { get; }
+    DbSet<CouponCampaign> CouponCampaigns { get; }
+    DbSet<CouponBatch> CouponBatches { get; }
+    DbSet<CouponCode> CouponCodes { get; }
+    DbSet<CouponEntry> CouponEntries { get; }
+    DbSet<CouponLookupEvent> CouponLookupEvents { get; }
+    DbSet<CampaignWinner> CampaignWinners { get; }
+    DbSet<Employee> Employees { get; }
+    DbSet<EmployeeCompensation> EmployeeCompensations { get; }
+    DbSet<PayrollAdjustment> PayrollAdjustments { get; }
+    DbSet<PayrollRun> PayrollRuns { get; }
+    DbSet<PaySlip> PaySlips { get; }
+    DbSet<PaySlipLine> PaySlipLines { get; }
+    DbSet<AttendanceRecord> AttendanceRecords { get; }
+    DbSet<LeaveType> LeaveTypes { get; }
+    DbSet<LeaveBalance> LeaveBalances { get; }
+    DbSet<LeaveRequest> LeaveRequests { get; }
+    DbSet<WorkSchedule> WorkSchedules { get; }
+    DbSet<PerformanceReview> PerformanceReviews { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

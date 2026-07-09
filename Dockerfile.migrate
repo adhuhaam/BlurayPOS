@@ -1,0 +1,8 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+COPY backend/ ./backend/
+RUN dotnet restore backend/Pos.slnx
+RUN dotnet tool install --global dotnet-ef --version 9.*
+ENV PATH="${PATH}:/root/.dotnet/tools"
+WORKDIR /src/backend/src/Pos.Api
+ENTRYPOINT ["dotnet", "ef", "database", "update", "--project", "../Pos.Infrastructure/Pos.Infrastructure.csproj"]

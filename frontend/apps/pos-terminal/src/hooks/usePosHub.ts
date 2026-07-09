@@ -2,7 +2,11 @@ import { useEffect, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 import { getAccessToken, getApiBaseUrl } from '@pos/api-client';
 
-export function usePosHub(storeId: string | null, onInventoryUpdated?: (productId: string, quantityOnHand: number) => void) {
+export function usePosHub(
+  storeId: string | null,
+  onInventoryUpdated?: (productId: string, quantityOnHand: number) => void,
+  onOnlineOrder?: (payload: { orderId: string; orderNumber: string; total: number; customerName: string }) => void,
+) {
   const connectionRef = useRef<signalR.HubConnection | null>(null);
 
   useEffect(() => {
@@ -20,6 +24,10 @@ export function usePosHub(storeId: string | null, onInventoryUpdated?: (productI
       onInventoryUpdated?.(data.productId, data.quantityOnHand);
     });
 
+    connection.on('OnlineOrderSubmitted', (data: { orderId: string; orderNumber: string; total: number; customerName: string }) => {
+      onOnlineOrder?.(data);
+    });
+
     connection.start()
       .then(() => connection.invoke('JoinStore', storeId))
       .catch(() => {});
@@ -30,5 +38,5 @@ export function usePosHub(storeId: string | null, onInventoryUpdated?: (productI
       connection.invoke('LeaveStore', storeId).catch(() => {});
       connection.stop();
     };
-  }, [storeId, onInventoryUpdated]);
+  }, [storeId, onInventoryUpdated, onOnlineOrder]);
 }

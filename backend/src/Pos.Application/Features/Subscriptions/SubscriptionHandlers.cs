@@ -9,6 +9,8 @@ public record GetSubscriptionQuery : IRequest<SubscriptionDto?>;
 public record ChangePlanCommand(ChangePlanRequest Request) : IRequest<SubscriptionDto>;
 public record CreateCheckoutCommand(ChangePlanRequest Request) : IRequest<CheckoutResponse>;
 public record SubmitSubscriptionPaymentCommand(SubmitSubscriptionPaymentRequest Request) : IRequest<SubscriptionPaymentDto>;
+public record ListMySubscriptionPaymentsQuery : IRequest<IList<SubscriptionPaymentDto>>;
+public record GetSubscriptionBillingInfoQuery : IRequest<SubscriptionBillingInfoDto>;
 
 public class ListPlansQueryHandler(ISubscriptionService subscriptionService) : IRequestHandler<ListPlansQuery, IList<PlanDto>>
 {
@@ -38,4 +40,18 @@ public class SubmitSubscriptionPaymentCommandHandler(ISubscriptionService subscr
 {
     public Task<SubscriptionPaymentDto> Handle(SubmitSubscriptionPaymentCommand command, CancellationToken cancellationToken) =>
         subscriptionService.SubmitPaymentAsync(command.Request, cancellationToken);
+}
+
+public class ListMySubscriptionPaymentsQueryHandler(ISubscriptionService subscriptionService)
+    : IRequestHandler<ListMySubscriptionPaymentsQuery, IList<SubscriptionPaymentDto>>
+{
+    public Task<IList<SubscriptionPaymentDto>> Handle(ListMySubscriptionPaymentsQuery request, CancellationToken cancellationToken) =>
+        subscriptionService.ListMyPaymentsAsync(cancellationToken);
+}
+
+public class GetSubscriptionBillingInfoQueryHandler(ISubscriptionService subscriptionService)
+    : IRequestHandler<GetSubscriptionBillingInfoQuery, SubscriptionBillingInfoDto>
+{
+    public Task<SubscriptionBillingInfoDto> Handle(GetSubscriptionBillingInfoQuery request, CancellationToken cancellationToken) =>
+        subscriptionService.GetBillingInfoAsync(cancellationToken);
 }

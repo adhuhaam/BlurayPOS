@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { PlusIcon, PencilIcon, ChefHatIcon, CheckIcon, ArrowRightIcon } from 'lucide-react';
 import { api, ApiError, type ProductDto, type CategoryDto, type ProductRecipeDto, type SupplyItemDto } from '@pos/api-client';
 import { PageHeader } from '@/components/page-header';
 import { CategoryPicker } from '@/components/category-picker';
 import { CatalogWorkflowBanner } from '@/components/catalog-workflow-banner';
+import { useAuth } from '@/auth';
 import { FormSelect } from '@/components/form-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,9 +41,13 @@ const emptyForm = {
   categoryId: '',
   trackInventory: true,
   inventoryMode: 'FinishedGood',
+  isOnlineVisible: true,
 };
 
 export function ProductsPage() {
+  const { tenantFeatures } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const recipesView = searchParams.get('view') === 'recipes' && (tenantFeatures?.catalogRecipes ?? true);
   const [products, setProducts] = useState<ProductDto[]>([]);
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [search, setSearch] = useState('');
@@ -59,6 +64,12 @@ export function ProductsPage() {
   const [recipeForm, setRecipeForm] = useState({ supplyItemId: '', quantity: '' });
   const [addingSupply, setAddingSupply] = useState(false);
   const [newSupply, setNewSupply] = useState({ name: '', unit: 'piece' });
+
+  useEffect(() => {
+    if (searchParams.get('view') === 'recipes' && tenantFeatures && !tenantFeatures.catalogRecipes) {
+      setSearchParams({});
+    }
+  }, [searchParams, tenantFeatures, setSearchParams]);
 
   const load = async () => {
     setLoading(true);
@@ -96,9 +107,9 @@ export function ProductsPage() {
     setAddingSupply(false);
   };
 
-  const openCreate = () => {
+  const openCreate = (presetRecipe = false) => {
     setEditing(null);
-    setForm(emptyForm);
+    setForm(presetRecipe ? { ...emptyForm, inventoryMode: 'RecipeBased' } : emptyForm);
     setWizardStep('details');
     setRecipeProduct(null);
     setModalOpen(true);
@@ -115,6 +126,7 @@ export function ProductsPage() {
       categoryId: p.categoryId ?? '',
       trackInventory: p.trackInventory,
       inventoryMode: p.inventoryMode ?? 'FinishedGood',
+      isOnlineVisible: p.isOnlineVisible ?? true,
     });
     setWizardStep('details');
     setModalOpen(true);
@@ -131,6 +143,7 @@ export function ProductsPage() {
       categoryId: p.categoryId ?? '',
       trackInventory: p.trackInventory,
       inventoryMode: p.inventoryMode ?? 'RecipeBased',
+      isOnlineVisible: p.isOnlineVisible ?? true,
     });
     setWizardStep('recipe');
     setModalOpen(true);
@@ -158,6 +171,7 @@ export function ProductsPage() {
           isActive: editing.isActive,
           trackInventory: form.trackInventory,
           inventoryMode: form.inventoryMode,
+          isOnlineVisible: form.isOnlineVisible,
         });
         toast.success('Product updated');
         if (form.inventoryMode === 'RecipeBased') {
@@ -245,36 +259,91 @@ export function ProductsPage() {
 
   const isRecipeMode = form.inventoryMode === 'RecipeBased';
   const showRecipeStep = wizardStep === 'recipe' && recipeProduct;
+  const showRecipes = tenantFeatures?.catalogRecipes ?? true;
+  const isRetailStore = tenantFeatures?.businessType === 'Retail';
+  const recipeProducts = products.filter((p) => p.inventoryMode === 'RecipeBased');
+  const visibleProducts = recipesView ? recipeProducts : products;
+
+  const setCatalogView = (recipes: boolean) => {
+    if (recipes) setSearchParams({ view: 'recipes' });
+    else setSearchParams({});
+  };
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Products"
-        description="Build your menu and catalog — create a product, then add its recipe"
+        title={recipesView ? 'Recipes' : 'Products'}
+        description={
+          recipesView
+            ? 'Link ingredients to recipe-based menu items — stock deducts when sold'
+            : isRetailStore
+              ? 'Add products with SKU and barcode — stock is tracked in Inventory'
+              : 'Build your menu — add retail items or recipe-based dishes'
+        }
         action={
-          <Button onClick={openCreate}>
+          <Button onClick={() => openCreate(recipesView)}>
             <PlusIcon data-icon="inline-start" />
-            Add Product
+            {recipesView ? 'Add recipe product' : 'Add product'}
           </Button>
         }
       />
 
-      <CatalogWorkflowBanner active="products" />
+      <CatalogWorkflowBanner active={recipesView ? 'recipes' : 'products'} />
 
-      <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
+      <div className="flex flex-wrap items-center gap-3">
+        {showRecipes && (
+          <div className="flex rounded-lg border p-0.5">
+            <Button
+              variant={!recipesView ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setCatalogView(false)}
+            >
+              All products
+            </Button>
+            <Button
+              variant={recipesView ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setCatalogView(true)}
+            >
+              <ChefHatIcon data-icon="inline-start" />
+              Recipes
+            </Button>
+          </div>
+        )}
+        <Input
+          placeholder={recipesView ? 'Search recipes...' : 'Search products...'}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-sm"
+        />
+      </div>
 
       {loading ? (
         <Skeleton className="h-64 w-full" />
-      ) : products.length === 0 ? (
+      ) : visibleProducts.length === 0 ? (
         <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed py-16 text-center">
           <PackageIconPlaceholder />
           <div>
-            <p className="font-medium">No products yet</p>
-            <p className="text-sm text-muted-foreground">Start by adding your first product. Recipe items can have ingredients added right after.</p>
+            <p className="font-medium">
+              {recipesView ? 'No recipe products yet' : 'No products yet'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {recipesView ? (
+                <>
+                  Add ingredients on{' '}
+                  <Link to="/supplies" className="font-medium underline">Ingredients</Link>
+                  {' '}first, then create a recipe product and link them here.
+                </>
+              ) : isRetailStore ? (
+                'Add products with name, price, SKU, and barcode for fast scanning at checkout.'
+              ) : (
+                'Add retail items or recipe-based menu items. Recipe products get ingredients on the next step.'
+              )}
+            </p>
           </div>
-          <Button onClick={openCreate}>
+          <Button onClick={() => openCreate(recipesView)}>
             <PlusIcon data-icon="inline-start" />
-            Add your first product
+            {recipesView ? 'Add your first recipe product' : 'Add your first product'}
           </Button>
         </div>
       ) : (
@@ -284,41 +353,49 @@ export function ProductsPage() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>SKU</TableHead>
+                {isRetailStore && <TableHead>Barcode</TableHead>}
                 <TableHead>Price</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Recipe</TableHead>
+                {showRecipes && <TableHead>Type</TableHead>}
+                {showRecipes && <TableHead>Recipe</TableHead>}
                 <TableHead className="w-28" />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map((p) => (
+              {visibleProducts.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.name}</TableCell>
                   <TableCell className="text-muted-foreground">{p.sku}</TableCell>
+                  {isRetailStore && (
+                    <TableCell className="font-mono text-sm text-muted-foreground">{p.barcode ?? '—'}</TableCell>
+                  )}
                   <TableCell>${p.basePrice.toFixed(2)}</TableCell>
                   <TableCell>{p.categoryName ?? '—'}</TableCell>
-                  <TableCell>
-                    <Badge variant={p.inventoryMode === 'RecipeBased' ? 'default' : 'secondary'}>
-                      {p.inventoryMode === 'RecipeBased' ? 'Recipe' : 'Retail'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {p.inventoryMode === 'RecipeBased' ? (
-                      <Button variant="link" size="sm" className="h-auto p-0" onClick={() => openRecipeOnly(p)}>
-                        <ChefHatIcon className="size-3.5" />
-                        Manage recipe
-                      </Button>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
+                  {showRecipes && (
+                    <TableCell>
+                      <Badge variant={p.inventoryMode === 'RecipeBased' ? 'default' : 'secondary'}>
+                        {p.inventoryMode === 'RecipeBased' ? 'Recipe' : 'Retail'}
+                      </Badge>
+                    </TableCell>
+                  )}
+                  {showRecipes && (
+                    <TableCell>
+                      {p.inventoryMode === 'RecipeBased' ? (
+                        <Button variant="link" size="sm" className="h-auto p-0" onClick={() => openRecipeOnly(p)}>
+                          <ChefHatIcon className="size-3.5" />
+                          Manage recipe
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                  )}
                   <TableCell>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon-sm" onClick={() => openEdit(p)} title="Edit">
                         <PencilIcon />
                       </Button>
-                      {p.inventoryMode === 'RecipeBased' && (
+                      {showRecipes && p.inventoryMode === 'RecipeBased' && (
                         <Button variant="ghost" size="icon-sm" onClick={() => openRecipeOnly(p)} title="Recipe">
                           <ChefHatIcon />
                         </Button>
@@ -371,8 +448,15 @@ export function ProductsPage() {
                   </div>
                 )}
                 <div className="flex flex-col gap-2">
-                  <Label>Barcode <span className="text-muted-foreground">(optional)</span></Label>
-                  <Input value={form.barcode} onChange={(e) => setForm({ ...form, barcode: e.target.value })} />
+                  <Label>
+                    Barcode
+                    {isRetailStore ? '' : <span className="text-muted-foreground"> (optional)</span>}
+                  </Label>
+                  <Input
+                    placeholder={isRetailStore ? 'Scan or type barcode for POS' : undefined}
+                    value={form.barcode}
+                    onChange={(e) => setForm({ ...form, barcode: e.target.value })}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
@@ -384,22 +468,34 @@ export function ProductsPage() {
                     <Input type="number" step="0.01" min="0" value={form.taxRate} onChange={(e) => setForm({ ...form, taxRate: e.target.value })} />
                   </div>
                 </div>
-                <FormSelect
-                  label="Product type"
-                  value={form.inventoryMode}
-                  onValueChange={(v) => setForm({ ...form, inventoryMode: v })}
-                  options={[
-                    { value: 'FinishedGood', label: 'Retail — track finished stock in Inventory' },
-                    { value: 'RecipeBased', label: 'Recipe — deduct ingredients when sold' },
-                  ]}
-                />
-                {form.inventoryMode === 'RecipeBased' && (
+                {showRecipes && (
+                  <FormSelect
+                    label="Product type"
+                    value={form.inventoryMode}
+                    onValueChange={(v) => setForm({ ...form, inventoryMode: v })}
+                    options={[
+                      { value: 'FinishedGood', label: 'Retail — track finished stock in Inventory' },
+                      { value: 'RecipeBased', label: 'Recipe — deduct ingredients when sold' },
+                    ]}
+                  />
+                )}
+                {showRecipes && form.inventoryMode === 'RecipeBased' && (
                   <Alert>
                     <AlertDescription className="text-xs">
-                      After saving, you'll add ingredients on the next step. Make sure ingredients exist in{' '}
-                      <Link to="/supplies" className="font-medium underline">Supplies</Link> first.
+                      After saving, you'll add ingredients on the next step.                       Make sure ingredients exist in{' '}
+                      <Link to="/supplies" className="font-medium underline">Ingredients</Link> first.
                     </AlertDescription>
                   </Alert>
+                )}
+                {(tenantFeatures?.onlineMenu || tenantFeatures?.onlineOrdering) && (
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={form.isOnlineVisible}
+                      onChange={(e) => setForm({ ...form, isOnlineVisible: e.target.checked })}
+                    />
+                    Show on online menu / ordering
+                  </label>
                 )}
                 <CategoryPicker
                   categories={categories}
@@ -468,7 +564,7 @@ export function ProductsPage() {
                     <Button variant="link" className="h-auto p-0" onClick={() => setAddingSupply(true)}>
                       Add one now
                     </Button>{' '}
-                    or go to <Link to="/supplies" className="font-medium underline">Supplies</Link>.
+                    or go to <Link to="/supplies" className="font-medium underline">Ingredients</Link>.
                   </AlertDescription>
                 </Alert>
               ) : (

@@ -1,6 +1,6 @@
 namespace Pos.Domain.Permissions;
 
-/// <summary>Canonical permission codes — see docs/SAAS_REQUIREMENTS.md</summary>
+/// <summary>Canonical permission codes — see memory-plan/SAAS_REQUIREMENTS.md</summary>
 public static class PermissionDefinitions
 {
     public static readonly IReadOnlyList<(string Code, string Name, string Module)> All =
@@ -37,6 +37,19 @@ public static class PermissionDefinitions
         ("Accounting.View", "View accounting", "Accounting"),
         ("Accounting.Export", "Export accounting", "Accounting"),
         ("Purchase.Manage", "Manage purchases", "Purchase"),
+        ("Promotion.View", "View coupon campaigns", "Promotion"),
+        ("Promotion.Create", "Create and edit coupon campaigns", "Promotion"),
+        ("Promotion.BatchGenerate", "Generate coupon QR batches", "Promotion"),
+        ("Promotion.ManageWinners", "Manage campaign winners", "Promotion"),
+        ("OnlineMenu.Manage", "Manage online menu", "OnlineMenu"),
+        ("OnlineOrder.View", "View online orders", "OnlineOrdering"),
+        ("OnlineOrder.Manage", "Manage online orders", "OnlineOrdering"),
+        ("Hr.View", "View HR records", "HR"),
+        ("Hr.Manage", "Manage employees and HR settings", "HR"),
+        ("Hr.Payroll.Run", "Run payroll", "HR"),
+        ("Hr.Payroll.Approve", "Approve and finalize payroll", "HR"),
+        ("Hr.Attendance.Manage", "Manage attendance", "HR"),
+        ("Hr.Leave.Approve", "Approve leave requests", "HR"),
         ("Platform.Manage", "Platform administration", "Platform"),
     ];
 
@@ -54,7 +67,10 @@ public static class PermissionDefinitions
             "Expense.Create", "Expense.Approve",
             "Settings.Manage", "Kitchen.View", "Kitchen.Update",
             "Delivery.View", "Delivery.Update",
-            "Accounting.View", "Accounting.Export", "Purchase.Manage"
+            "Accounting.View", "Accounting.Export", "Purchase.Manage",
+            "OnlineMenu.Manage", "OnlineOrder.View", "OnlineOrder.Manage",
+            "Promotion.View", "Promotion.Create", "Promotion.BatchGenerate", "Promotion.ManageWinners",
+            "Hr.View", "Hr.Manage", "Hr.Payroll.Run", "Hr.Payroll.Approve", "Hr.Attendance.Manage", "Hr.Leave.Approve"
         ],
         ["StoreManager"] =
         [
@@ -62,7 +78,10 @@ public static class PermissionDefinitions
             "Pos.Access", "Order.View",
             "Sale.Create", "Sale.Edit", "Sale.Void", "Sale.Discount",
             "Customer.Create", "Customer.Edit",
-            "Report.View", "Kitchen.View", "Kitchen.Update", "Delivery.View", "Delivery.Update"
+            "Report.View", "Kitchen.View", "Kitchen.Update", "Delivery.View", "Delivery.Update",
+            "OnlineMenu.Manage", "OnlineOrder.View", "OnlineOrder.Manage",
+            "Promotion.View", "Promotion.Create", "Promotion.BatchGenerate", "Promotion.ManageWinners",
+            "Hr.View", "Hr.Attendance.Manage", "Hr.Leave.Approve"
         ],
         ["Cashier"] =
         [
@@ -79,7 +98,8 @@ public static class PermissionDefinitions
         ["Accountant"] =
         [
             "Report.View", "Report.Advanced",
-            "Expense.Create", "Accounting.View", "Accounting.Export", "Purchase.Manage"
+            "Expense.Create", "Accounting.View", "Accounting.Export", "Purchase.Manage",
+            "Hr.View", "Hr.Payroll.Run"
         ]
     };
 

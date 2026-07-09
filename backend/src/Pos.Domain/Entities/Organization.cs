@@ -20,12 +20,13 @@ public class Organization : BaseEntity
     public bool IsReadOnly { get; set; }
     public string? PaymentQrPayload { get; set; }
     public string? PaymentInstructions { get; set; }
-    // Maldives GST (MIRA) — see docs/GST_MALDIVES.md
+    // Maldives GST (MIRA) — see memory-plan/GST_MALDIVES.md
     public string? GstRegistrationNumber { get; set; }
     public GstType GstType { get; set; } = GstType.None;
     public decimal GstRate { get; set; }
     public string? GstBusinessName { get; set; }
     public string? GstBusinessAddress { get; set; }
+    public BusinessType BusinessType { get; set; } = BusinessType.Hybrid;
 
     public Subscription? Subscription { get; set; }
     public ICollection<Store> Stores { get; set; } = [];
@@ -40,8 +41,19 @@ public class Store : TenantEntity
     public string? Address { get; set; }
     public string? Phone { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool OnlineMenuEnabled { get; set; }
+    public bool OnlineOrderingEnabled { get; set; }
+    public bool AllowPickup { get; set; } = true;
+    public bool AllowDelivery { get; set; }
+    public bool AllowDineIn { get; set; } = true;
+    public bool AllowCashOnDelivery { get; set; } = true;
+    public bool AllowBankTransfer { get; set; } = true;
+    public decimal MinOrderAmount { get; set; }
+    public decimal DeliveryFeeFlat { get; set; }
+    public string? OnlineMenuWelcomeText { get; set; }
 
     public Organization Organization { get; set; } = null!;
+    public ICollection<DiningTable> DiningTables { get; set; } = [];
     public ICollection<Terminal> Terminals { get; set; } = [];
     public ICollection<InventoryItem> InventoryItems { get; set; } = [];
     public ICollection<Order> Orders { get; set; } = [];
