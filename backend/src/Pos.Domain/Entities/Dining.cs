@@ -21,6 +21,7 @@ public class DiningTable : TenantEntity
     public string Name { get; set; } = string.Empty;
     public string? Code { get; set; }
     public int Capacity { get; set; } = 4;
+    public DiningTableSize Size { get; set; } = DiningTableSize.Medium;
     public int SortOrder { get; set; }
     public DiningTableStatus Status { get; set; } = DiningTableStatus.Available;
     public string QrToken { get; set; } = string.Empty;

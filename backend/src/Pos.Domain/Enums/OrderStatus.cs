@@ -35,6 +35,14 @@ public enum DiningTableStatus
     Cleaning = 4
 }
 
+/// <summary>Floor-plan footprint for table cards (Small / Medium / Large).</summary>
+public enum DiningTableSize
+{
+    Small = 0,
+    Medium = 1,
+    Large = 2
+}
+
 public enum PaymentMethod
 {
     Cash = 0,

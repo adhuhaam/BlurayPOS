@@ -42,6 +42,7 @@ public static class PermissionDefinitions
         ("Promotion.BatchGenerate", "Generate coupon QR batches", "Promotion"),
         ("Promotion.ManageWinners", "Manage campaign winners", "Promotion"),
         ("OnlineMenu.Manage", "Manage online menu", "OnlineMenu"),
+        ("Tables.Manage", "Manage dining areas and tables", "Tables"),
         ("OnlineOrder.View", "View online orders", "OnlineOrdering"),
         ("OnlineOrder.Manage", "Manage online orders", "OnlineOrdering"),
         ("Hr.View", "View HR records", "HR"),
@@ -68,7 +69,7 @@ public static class PermissionDefinitions
             "Settings.Manage", "Kitchen.View", "Kitchen.Update",
             "Delivery.View", "Delivery.Update",
             "Accounting.View", "Accounting.Export", "Purchase.Manage",
-            "OnlineMenu.Manage", "OnlineOrder.View", "OnlineOrder.Manage",
+            "OnlineMenu.Manage", "OnlineOrder.View", "OnlineOrder.Manage", "Tables.Manage",
             "Promotion.View", "Promotion.Create", "Promotion.BatchGenerate", "Promotion.ManageWinners",
             "Hr.View", "Hr.Manage", "Hr.Payroll.Run", "Hr.Payroll.Approve", "Hr.Attendance.Manage", "Hr.Leave.Approve"
         ],
@@ -79,7 +80,7 @@ public static class PermissionDefinitions
             "Sale.Create", "Sale.Edit", "Sale.Void", "Sale.Discount",
             "Customer.Create", "Customer.Edit",
             "Report.View", "Kitchen.View", "Kitchen.Update", "Delivery.View", "Delivery.Update",
-            "OnlineMenu.Manage", "OnlineOrder.View", "OnlineOrder.Manage",
+            "OnlineMenu.Manage", "OnlineOrder.View", "OnlineOrder.Manage", "Tables.Manage",
             "Promotion.View", "Promotion.Create", "Promotion.BatchGenerate", "Promotion.ManageWinners",
             "Hr.View", "Hr.Attendance.Manage", "Hr.Leave.Approve"
         ],

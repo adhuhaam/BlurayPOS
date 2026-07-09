@@ -12,12 +12,20 @@ namespace Pos.Api.Controllers;
 public class DiningAreasController(IMediator mediator) : ApiControllerBase(mediator)
 {
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<IList<DiningAreaDto>>>> GetAreas([FromQuery] Guid storeId) =>
-        OkResponse(await Mediator.Send(new GetDiningAreasQuery(storeId)));
+    public async Task<ActionResult<ApiResponse<IList<DiningAreaDto>>>> GetAreas(
+        [FromQuery] Guid storeId,
+        [FromQuery] bool includeInactive = false) =>
+        OkResponse(await Mediator.Send(new GetDiningAreasQuery(storeId, includeInactive)));
 
     [HttpPost]
     public async Task<ActionResult<ApiResponse<DiningAreaDto>>> CreateArea(
         [FromQuery] Guid storeId,
         [FromBody] CreateDiningAreaRequest request) =>
         OkResponse(await Mediator.Send(new CreateDiningAreaCommand(storeId, request)));
+
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<ApiResponse<DiningAreaDto>>> UpdateArea(
+        Guid id,
+        [FromBody] UpdateDiningAreaRequest request) =>
+        OkResponse(await Mediator.Send(new UpdateDiningAreaCommand(id, request)));
 }

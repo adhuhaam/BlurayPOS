@@ -12,8 +12,10 @@ namespace Pos.Api.Controllers;
 public class TablesController(IMediator mediator) : ApiControllerBase(mediator)
 {
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<IList<DiningTableDto>>>> GetTables([FromQuery] Guid storeId) =>
-        OkResponse(await Mediator.Send(new GetDiningTablesQuery(storeId)));
+    public async Task<ActionResult<ApiResponse<IList<DiningTableDto>>>> GetTables(
+        [FromQuery] Guid storeId,
+        [FromQuery] bool includeInactive = false) =>
+        OkResponse(await Mediator.Send(new GetDiningTablesQuery(storeId, includeInactive)));
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ApiResponse<DiningTableDto>>> GetTable(Guid id) =>
@@ -24,4 +26,10 @@ public class TablesController(IMediator mediator) : ApiControllerBase(mediator)
         [FromQuery] Guid storeId,
         [FromBody] CreateDiningTableRequest request) =>
         OkResponse(await Mediator.Send(new CreateDiningTableCommand(storeId, request)));
+
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<ApiResponse<DiningTableDto>>> UpdateTable(
+        Guid id,
+        [FromBody] UpdateDiningTableRequest request) =>
+        OkResponse(await Mediator.Send(new UpdateDiningTableCommand(id, request)));
 }

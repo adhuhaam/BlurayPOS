@@ -992,6 +992,7 @@ export interface DiningAreaDto {
   name: string;
   sortOrder: number;
   tableCount: number;
+  isActive: boolean;
 }
 
 export interface CreateDiningAreaRequest {
@@ -999,11 +1000,20 @@ export interface CreateDiningAreaRequest {
   sortOrder?: number;
 }
 
+export interface UpdateDiningAreaRequest {
+  name: string;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+export type DiningTableSize = 'Small' | 'Medium' | 'Large';
+
 export interface DiningTableDto {
   id: string;
   name: string;
   code: string | null;
   capacity: number;
+  size: DiningTableSize;
   diningAreaId: string | null;
   areaName: string | null;
   status: string;
@@ -1012,6 +1022,7 @@ export interface DiningTableDto {
   activeOrderTotal: number | null;
   sentToKitchen: boolean;
   billRequested: boolean;
+  isActive: boolean;
   qrToken?: string | null;
 }
 
@@ -1021,6 +1032,17 @@ export interface CreateDiningTableRequest {
   capacity: number;
   diningAreaId?: string;
   sortOrder?: number;
+  size?: DiningTableSize;
+}
+
+export interface UpdateDiningTableRequest {
+  name: string;
+  code?: string;
+  capacity: number;
+  diningAreaId?: string | null;
+  isActive: boolean;
+  sortOrder?: number;
+  size?: DiningTableSize;
 }
 
 // Coupons & lucky draw module

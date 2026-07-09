@@ -111,8 +111,10 @@ import type {
   CreatePerformanceReviewRequest,
   DiningAreaDto,
   CreateDiningAreaRequest,
+  UpdateDiningAreaRequest,
   DiningTableDto,
   CreateDiningTableRequest,
+  UpdateDiningTableRequest,
   PublicStoreProfileDto,
   PublicMenuCategoryDto,
   PublicTableDto,
@@ -241,17 +243,23 @@ export const api = {
     request<OrderDto>(`/api/orders/${id}/reject`, { method: 'POST', body: { reason } }),
 
   // Dining tables & areas
-  getDiningAreas: (storeId: string) =>
-    request<DiningAreaDto[]>('/api/dining-areas', { params: { storeId } }),
+  getDiningAreas: (storeId: string, includeInactive = false) =>
+    request<DiningAreaDto[]>('/api/dining-areas', { params: { storeId, includeInactive } }),
 
   createDiningArea: (storeId: string, data: CreateDiningAreaRequest) =>
     request<DiningAreaDto>('/api/dining-areas', { method: 'POST', body: data, params: { storeId } }),
 
-  getDiningTables: (storeId: string) =>
-    request<DiningTableDto[]>('/api/tables', { params: { storeId } }),
+  updateDiningArea: (id: string, data: UpdateDiningAreaRequest) =>
+    request<DiningAreaDto>(`/api/dining-areas/${id}`, { method: 'PUT', body: data }),
+
+  getDiningTables: (storeId: string, includeInactive = false) =>
+    request<DiningTableDto[]>('/api/tables', { params: { storeId, includeInactive } }),
 
   createDiningTable: (storeId: string, data: CreateDiningTableRequest) =>
     request<DiningTableDto>('/api/tables', { method: 'POST', body: data, params: { storeId } }),
+
+  updateDiningTable: (id: string, data: UpdateDiningTableRequest) =>
+    request<DiningTableDto>(`/api/tables/${id}`, { method: 'PUT', body: data }),
 
   // Public online ordering
   getPublicStore: (slug: string) =>

@@ -329,16 +329,17 @@ public record RefreshTokenRequest(string RefreshToken, Guid? StoreId = null);
 
 // —— Dining tables ——
 
-public record DiningAreaDto(Guid Id, string Name, int SortOrder, int TableCount);
+public record DiningAreaDto(Guid Id, string Name, int SortOrder, int TableCount, bool IsActive);
 
 public record DiningTableDto(
-    Guid Id, string Name, string? Code, int Capacity, Guid? DiningAreaId, string? AreaName,
+    Guid Id, string Name, string? Code, int Capacity, string Size, Guid? DiningAreaId, string? AreaName,
     string Status, Guid? ActiveOrderId, string? ActiveOrderNumber, decimal? ActiveOrderTotal,
-    bool SentToKitchen, bool BillRequested, string? QrToken = null);
+    bool SentToKitchen, bool BillRequested, bool IsActive, string? QrToken = null);
 
 public record CreateDiningAreaRequest(string Name, int SortOrder = 0);
-public record CreateDiningTableRequest(string Name, string? Code, int Capacity, Guid? DiningAreaId, int SortOrder = 0);
-public record UpdateDiningTableRequest(string Name, string? Code, int Capacity, Guid? DiningAreaId, bool IsActive, int SortOrder = 0);
+public record UpdateDiningAreaRequest(string Name, int SortOrder = 0, bool IsActive = true);
+public record CreateDiningTableRequest(string Name, string? Code, int Capacity, Guid? DiningAreaId, int SortOrder = 0, DiningTableSize Size = DiningTableSize.Medium);
+public record UpdateDiningTableRequest(string Name, string? Code, int Capacity, Guid? DiningAreaId, bool IsActive, int SortOrder = 0, DiningTableSize Size = DiningTableSize.Medium);
 
 // —— Public online ordering ——
 

@@ -68,6 +68,7 @@ public static class DataSeeder
             ALTER TABLE "Orders" ADD COLUMN IF NOT EXISTS "ServiceType" integer NULL;
             ALTER TABLE "Orders" ADD COLUMN IF NOT EXISTS "SentToKitchenAt" timestamp with time zone NULL;
             ALTER TABLE "Orders" ADD COLUMN IF NOT EXISTS "BillRequestedAt" timestamp with time zone NULL;
+            ALTER TABLE "DiningTables" ADD COLUMN IF NOT EXISTS "Size" integer NOT NULL DEFAULT 1;
             ALTER TABLE "Plans" ADD COLUMN IF NOT EXISTS "HasOnlineMenu" boolean NOT NULL DEFAULT false;
             ALTER TABLE "Plans" ADD COLUMN IF NOT EXISTS "HasOnlineOrdering" boolean NOT NULL DEFAULT false;
             ALTER TABLE "Orders" ADD COLUMN IF NOT EXISTS "PublicTrackingToken" text NULL;
@@ -97,6 +98,9 @@ public static class DataSeeder
             ON CONFLICT DO NOTHING;
             INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
             VALUES ('20260709100000_AddDiningTables', '9.0.0')
+            ON CONFLICT DO NOTHING;
+            INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+            VALUES ('20260709120000_AddDiningTableSize', '9.0.0')
             ON CONFLICT DO NOTHING;
             """);
 
