@@ -2,9 +2,11 @@
 
 Native Android POS for phones, tablets, and rugged handheld terminals. One codebase — see [memory-plan/ANDROID_MASTER_PLAN.md](../memory-plan/ANDROID_MASTER_PLAN.md).
 
-**Current version:** 0.6.0 · **Package:** `com.bluraypos.terminal`
+**Current version:** 0.7.0 · **Package:** `com.bluraypos.terminal` · **targetSdk:** 34
 
-## Restaurant table orders (v0.6.0)
+> **Production builds on your PC:** [docs/ANDROID_PRODUCTION_BUILD.md](../docs/ANDROID_PRODUCTION_BUILD.md) — `git pull`, preview APK, signed release / Play Store AAB.
+
+## Restaurant table orders (v0.6.0+)
 
 Full spec: [memory-plan/TABLE_ORDERS.md](../memory-plan/TABLE_ORDERS.md)
 
@@ -39,7 +41,7 @@ Reference device (customer terminal):
 | Printer | 58 mm built-in thermal |
 | Camera | 5 MP (barcode / QR later) |
 
-**App config:** `minSdk 27`, `targetSdk 30` (MIUI compat), Kotlin + Jetpack Compose.
+**App config:** `minSdk 27`, `targetSdk 34`, Kotlin + Jetpack Compose.
 
 **Test device:** Redmi Note 8 (`adb` over USB; MIUI install workaround documented below).
 
@@ -67,7 +69,7 @@ export PATH=$PATH:$ANDROID_HOME/platform-tools
 Phone cannot use `localhost` for the API. Use your PC LAN IP on the **same Wi‑Fi**. Port comes from `.dev-api-port` (5147 or 5148).
 
 ```bash
-cd /home/adhuhaam/BlurayPOS
+cd ~/BlurayPOS   # after git pull
 ./scripts/ensure-dev-api.sh   # writes .dev-api-port
 cat .dev-api-port             # active API port
 ```
@@ -79,21 +81,39 @@ See [memory-plan/DEV_ENVIRONMENT.md](../memory-plan/DEV_ENVIRONMENT.md) for full
 | Variant | Command | API | Use case |
 |---------|---------|-----|----------|
 | **Debug** | `./scripts/install-android.sh` | Dev LAN (`http://<ip>:5147`) | Daily dev on USB device |
-| **Preview** | `./scripts/build-android-preview.sh` | `https://api.bluraymaldives.site` | Field test / share APK |
-| **Release** | `./gradlew assembleRelease` | Production | Play Store (needs release keystore) |
+| **Preview** | `./scripts/build-android-preview.sh` | `https://api.bluraymaldives.site` | Field test / share APK (no keystore) |
+| **Release** | `./scripts/build-android-release.sh apk` | Production HTTPS | Signed production APK |
+| **Play Store** | `./scripts/build-android-release.sh aab` | Production HTTPS | Google Play upload |
 
-### Preview APK (production)
+### Preview APK (production API, no keystore)
 
 ```bash
+git pull origin main
 ./scripts/build-android-preview.sh
-# Output: terminal_app/dist/BlurayPOS-v0.6.0-preview.apk
+# Output: terminal_app/dist/BlurayPOS-v0.7.0-preview.apk
 
-adb install -r terminal_app/dist/BlurayPOS-v0.6.0-preview.apk
+adb install -r terminal_app/dist/BlurayPOS-v0.7.0-preview.apk
 ```
 
 No demo credential prefill in preview builds. Use real tenant accounts on production.
 
-**Low RAM:** Gradle is tuned in `gradle.properties` (`-Xmx1024m`, single worker, no daemon). The build script further limits heap to 768 MB and skips lint.
+### Release APK / AAB (signed)
+
+One-time keystore setup:
+
+```bash
+bash scripts/generate-android-keystore.sh
+# or copy terminal_app/keystore.properties.example → keystore.properties
+```
+
+Then build:
+
+```bash
+./scripts/build-android-release.sh apk   # signed APK
+./scripts/build-android-release.sh aab   # Play Store bundle
+```
+
+**Low RAM:** Gradle is tuned in `gradle.properties` (`-Xmx1024m`, single worker, no daemon). Preview builds further cap heap to 768 MB and skip lint.
 
 ## Build & install (debug)
 
@@ -118,12 +138,22 @@ adb shell am start -n com.bluraypos.terminal/.MainActivity
 ## First login
 
 1. Debug API URL is baked into the APK from `.dev-api-port` + LAN IP (see `app/build.gradle.kts` → `buildTypes.debug`)
-2. Sign in — demo: `cashier@demo.com` / `Cashier123!`
+2. Sign in — demo prefill in debug only: `cashier@demo.com` / `Cashier123!`
 3. Select branch if prompted (**Main Branch**)
 4. **Home** — today's sales, quick actions
 5. **POS** — restaurant tenants see categories; retail tenants get barcode-focused search
 6. **Orders** (or **Sales** for retail) — filter and open order details
 7. **Settings** — connection test, store type, feature flags
+
+## v0.7.0 production hardening
+
+| Area | Behavior |
+|------|----------|
+| targetSdk | 34 (Play Store compliant) |
+| HTTPS only | Release/preview — no cleartext; debug allows LAN HTTP |
+| R8 shrinking | Enabled on release builds |
+| HTTP logging | Debug builds only |
+| Release signing | `keystore.properties` + `.jks` (local only, gitignored) |
 
 ## v0.5.0 features
 
@@ -153,6 +183,8 @@ terminal_app/
 │       ├── settings/      # Settings
 │       └── shell/         # MainShell bottom nav
 ├── branding/              # Logos, app icon source
+├── keystore.properties.example
+├── dist/                  # Built APKs/AABs (gitignored)
 ├── build.gradle.kts
 └── settings.gradle.kts
 ```
@@ -167,6 +199,7 @@ terminal_app/
 - [x] Fullscreen immersive UI
 - [x] Restaurant vs Retail tenant modes
 - [x] Tables tab + restaurant kitchen/bill/pay flow (v0.6.0)
+- [x] Production build pipeline (preview + signed release, v0.7.0)
 - [ ] Shift open/close gate
 - [ ] 58 mm thermal printer SDK integration
 - [ ] Barcode scan (camera)
@@ -177,6 +210,7 @@ terminal_app/
 
 ## Related docs
 
+- [docs/ANDROID_PRODUCTION_BUILD.md](../docs/ANDROID_PRODUCTION_BUILD.md) — **git pull → production APK**
 - [memory-plan/TABLE_ORDERS.md](../memory-plan/TABLE_ORDERS.md) — restaurant table flow
 - [memory-plan/TERMINAL_APP.md](../memory-plan/TERMINAL_APP.md) — living manual
 - [memory-plan/ANDROID_MASTER_PLAN.md](../memory-plan/ANDROID_MASTER_PLAN.md) — product spec

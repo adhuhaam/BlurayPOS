@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -6,6 +9,12 @@ plugins {
 
 val productionApiUrl = "https://api.bluraymaldives.site"
 
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.bluraypos.terminal"
     compileSdk = 36
@@ -13,11 +22,22 @@ android {
     defaultConfig {
         applicationId = "com.bluraypos.terminal"
         minSdk = 27
-        targetSdk = 30
-        versionCode = 14
-        versionName = "0.6.0"
+        targetSdk = 34
+        versionCode = 15
+        versionName = "0.7.0"
         buildConfigField("String", "API_URL", "\"$productionApiUrl\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+            }
+        }
     }
 
     buildTypes {
@@ -29,16 +49,22 @@ android {
             buildConfigField("String", "API_URL", "\"http://${devApiHost}:${devApiPort}\"")
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             buildConfigField("String", "API_URL", "\"$productionApiUrl\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         create("preview") {
             initWith(getByName("release"))
             isDebuggable = false
+            isMinifyEnabled = false
+            isShrinkResources = false
             // Debug keystore so preview APK can be sideloaded without a release signing key.
             signingConfig = signingConfigs.getByName("debug")
             buildConfigField("String", "API_URL", "\"$productionApiUrl\"")

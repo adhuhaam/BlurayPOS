@@ -1,0 +1,6 @@
+# APK output directory (artifacts are gitignored; build scripts write here)
+
+Build with:
+
+- `./scripts/build-android-preview.sh` → `BlurayPOS-v*-preview.apk`
+- `./scripts/build-android-release.sh` → `BlurayPOS-v*-release.apk` or `.aab`

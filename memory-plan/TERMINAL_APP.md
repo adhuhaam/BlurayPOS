@@ -37,6 +37,7 @@ The rugged handheld terminal runs **Android 8.1** with a **58 mm thermal printer
 | API URL on device (prod) | `https://api.bluraymaldives.site` (preview + release builds) |
 | API URL on device (dev) | `http://<lan-ip>:5147` (debug build; see `BuildConfig.API_URL`) |
 | Preview APK | `./scripts/build-android-preview.sh` → `terminal_app/dist/BlurayPOS-v*-preview.apk` |
+| Release APK / AAB | `./scripts/build-android-release.sh` → signed production artifacts (see [docs/ANDROID_PRODUCTION_BUILD.md](../docs/ANDROID_PRODUCTION_BUILD.md)) |
 
 ### Docker permission note
 
@@ -66,7 +67,7 @@ User must be in `docker` group (`sudo usermod -aG docker $USER`) or log out/in a
 | Colors | shadcn light: `#FAFAFA` primary on white; Bluray blue for brand accents |
 | Tagline | SMART POS. SMARTER BUSINESS. |
 
-**Current version:** **0.6.0** (`versionCode` 14)
+**Current version:** **0.7.0** (`versionCode` 15)
 
 ## Restaurant table orders (v0.6.0)
 

@@ -202,6 +202,7 @@ You are on the BlurayPOS droplet. Repo: /opt/bluraypos. Do not commit or edit .e
 
 ## Related docs
 
+- [docs/ANDROID_PRODUCTION_BUILD.md](./ANDROID_PRODUCTION_BUILD.md) — local PC: git pull, preview/release APK
 - [memory-plan/PRODUCTION_INFRASTRUCTURE.md](../memory-plan/PRODUCTION_INFRASTRUCTURE.md) — nginx, DNS, systemd
 - [memory-plan/DEV_ENVIRONMENT.md](../memory-plan/DEV_ENVIRONMENT.md) — local PC dev (ports, Docker)
 - [frontend/env/README.md](../frontend/env/README.md) — `VITE_*` env files
